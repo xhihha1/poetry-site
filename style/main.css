@@ -1,0 +1,151 @@
+body {
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    margin: 0;
+  }
+  #current-book{
+    position: fixed;
+    height: 22px;
+    top: 0px;
+    left: 5px;
+    background-color: white;
+    opacity: 0.7;
+    z-index: 500;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding: 2px 10px;
+    box-sizing: border-box;
+    border: 1px solid #7f5539;
+    /* border-radius: 5px; */
+    font-size: 12px;
+    line-height: 20px;
+  }
+  #body-container{
+    position: relative;
+    width: 100%;
+    height: calc(100% - 50px);
+    background-color: #9c6644;
+    overflow: auto;
+  }
+  #body-tab{
+    position: fixed;
+    bottom: 0px;
+    height: 50px;
+    width: 100%;
+    background-color: #7f5539;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .block-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+  }
+  #keyboard-title {
+    color: #ede0d4;
+    text-align: center;
+  }
+  .inputFieldArea{
+    width: 100%;
+    position: relative;
+    text-align: center;
+  }
+  #inputField {
+    width: 90%;
+    height: 40px;
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .grid-container {
+    display: grid;
+    gap: 10px;
+    background-color: transparent;
+    padding: 10px;
+  }
+
+  .grid-item {
+    background-color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    padding: 20px;
+    font-size: 30px;
+  }
+
+
+  .itemE {
+    grid-column: 1 / span 3;
+    grid-row: 5;
+  }
+
+  .grid-item button {
+    width: 80px;
+    height: 80px;
+    font-size: 24px;
+    cursor: pointer;
+    background-color: #ddb892;
+    color: #7f5539;
+    border: none;
+    border-radius: 50%;
+  }
+
+  .itemE button {
+    width: 90%;
+    border-radius: 5px;
+  }
+
+  /* .wide {
+    grid-column: span 3;
+  } */
+
+  .radio-buttons {
+    margin-bottom: 20px;
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .book-item{
+    position: relative;
+    width: 300px;
+    max-width: 300px;
+    padding: 5px;
+  }
+  .book-item img{
+    width: 100%;
+  }
+  .book-tab-item{
+    flex: 1;
+    color: #ede0d4;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .book-tab-item a{
+    color: #ede0d4;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  #book-page{
+    display: none;
+    background-color: #ddb892;
+    color: #7f5539;
+  }
+  #book-keyboard{
+    display: none;
+  }
+  #book-song{
+    display: none;
+    text-align: center;
+  }

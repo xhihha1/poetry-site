@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <title>加入手机主屏幕示例</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- iOS 配置 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="加入手机主屏幕示例">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.jpg">
+
+    <!-- Fallback icon for older Android browsers -->
+    <link rel="icon" sizes="192x192" href="/icons/icon-192x192.jpg">
+</head>
+<body>
+    <h1>将本网页添加到手机主屏幕</h1>
+    <p>点击浏览器菜单，然后选择“添加到主屏幕”。</p>
+
+    <!-- Optional JavaScript to prompt users to add to home screen -->
+    <script>
+        let deferredPrompt;
+        const addBtn = document.createElement('button');
+        addBtn.innerText = '添加到主屏幕';
+        addBtn.style.display = 'none';
+        document.body.appendChild(addBtn);
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            addBtn.style.display = 'block';
+
+            addBtn.addEventListener('click', () => {
+                addBtn.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('用户接受了安装提示');
+                    } else {
+                        console.log('用户拒绝了安装提示');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
