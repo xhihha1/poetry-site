@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Markdown 朗讀功能</title>
+    <script src="./script/marked.min.js"></script>
+    <style>
+        /* 確保Markdown內容的基本樣式 */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        #content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 10px;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Markdown 朗讀功能示例</h1>
+    <ul id="topicNewTestament"></ul>
+    <button onclick="loadAndReadMarkdown()">讀取並朗讀 Markdown 文件</button>
+    <button onclick="readText()">發音</button>
+    <div id="content"></div>
+
+    <script>
+        let textToRead = '';
+        let topicFile = 'Matthew';
+        let topicList = [
+            'Matthew',
+            'Mark'
+        ]
+        function genList(items, ulId) {
+            // 找到指定的ul元素
+            const ul = document.getElementById(ulId);
+            if (!ul) {
+                console.error(`元素id为"${ulId}"的<ul>未找到`);
+                return;
+            }
+            
+            // 清空ul的现有内容
+            ul.innerHTML = '';
+
+            // 遍历每个字符串，创建<li>元素并插入到<ul>
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                li.addEventListener('click', () => changTopic(item));
+                ul.appendChild(li);
+            });
+        }
+        function changTopic (name) {
+            topicFile = `${name}`;
+            loadAndReadMarkdown();
+        }
+        async function loadAndReadMarkdown() {
+            try {
+                // 加載Markdown文件
+                const response = await fetch(`./bible/NewTestament/${topicFile}.md`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const markdown = await response.text();
+
+                // 解析Markdown內容
+                const contentDiv = document.getElementById('content');
+                contentDiv.innerHTML = marked.parse(markdown);
+
+                // 提取內文
+                const paragraphs = contentDiv.querySelectorAll('p');
+                textToRead = Array.from(paragraphs).map(p => p.textContent).join(' ');
+
+                // console.log(textToRead);
+                // 使用Web Speech API朗讀內文
+                // const msg = new SpeechSynthesisUtterance(textToRead);
+                // msg.lang = 'zh-CN'; // 設置語言為中文
+                // window.speechSynthesis.speak(msg);
+            } catch (error) {
+                console.error('Error loading or reading Markdown file:', error);
+            }
+        }
+        function readText() {
+            const text = textToRead;
+            if (text) {
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'zh-CN'; // 設置語言為中文
+                window.speechSynthesis.speak(msg);
+            } else {
+                alert("請輸入一些文字");
+            }
+        }
+
+        genList(topicList, 'topicNewTestament');
+    </script>
+</body>
+</html>
