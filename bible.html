@@ -32,82 +32,155 @@
             background: #f4f4f4;
             padding: 2px 4px;
         }
+        .line {
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .line.current {
+            color: blue;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
     <h1>Markdown 朗讀功能示例</h1>
     <ul id="topicNewTestament"></ul>
-    <button onclick="loadAndReadMarkdown()">讀取並朗讀 Markdown 文件</button>
-    <button onclick="readText()">發音</button>
+    <button onclick="loadAndReadMarkdown()">讀取並顯示 Markdown 文件</button>
+    <button onclick="readAllLine()">朗讀全文</button>
+    <button onclick="pauseReading()">暫停</button>
+    <button onclick="resumeReading()">繼續</button>
     <div id="content"></div>
 
     <script>
         let textToRead = '';
         let topicFile = 'Matthew';
-        let topicList = [
-            'Matthew',
-            'Mark'
-        ]
+        const topicList = [
+            {name: '馬太福音 ', file:'Matthew'},
+            {name: '馬可福音 ', file:'Mark'},
+            {name: '路加福音 ', file:'Luke'}
+        ];
+        let speechSynthesisUtterance = null;
+
+        // 生成列表項目
         function genList(items, ulId) {
-            // 找到指定的ul元素
             const ul = document.getElementById(ulId);
             if (!ul) {
                 console.error(`元素id为"${ulId}"的<ul>未找到`);
                 return;
             }
-            
-            // 清空ul的现有内容
             ul.innerHTML = '';
-
-            // 遍历每个字符串，创建<li>元素并插入到<ul>
             items.forEach(item => {
                 const li = document.createElement('li');
-                li.textContent = item;
-                li.addEventListener('click', () => changTopic(item));
+                li.textContent = item.name;
+                li.addEventListener('click', () => changTopic(item.file));
                 ul.appendChild(li);
             });
         }
-        function changTopic (name) {
-            topicFile = `${name}`;
+
+        // 更改主題並加載相應的Markdown文件
+        function changTopic(name) {
+            topicFile = name;
             loadAndReadMarkdown();
         }
+
+        // 加載並顯示Markdown文件
         async function loadAndReadMarkdown() {
             try {
-                // 加載Markdown文件
                 const response = await fetch(`./bible/NewTestament/${topicFile}.md`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 const markdown = await response.text();
-
-                // 解析Markdown內容
                 const contentDiv = document.getElementById('content');
-                contentDiv.innerHTML = marked.parse(markdown);
+                const parsedContent = marked.parse(markdown);
 
-                // 提取內文
-                const paragraphs = contentDiv.querySelectorAll('p');
-                textToRead = Array.from(paragraphs).map(p => p.textContent).join(' ');
+                // 将<p>标签内容用<div>标签分行
+                const contentWithDivs = parsedContent.replace(/<p>(.*?)<\/p>/gs, (match, p1) => {
+                    const lines = p1.split('<br>').map(line => `<div class="line">${line.trim()}</div>`).join('');
+                    return `<p>${lines}</p>`;
+                });
 
-                // console.log(textToRead);
-                // 使用Web Speech API朗讀內文
-                // const msg = new SpeechSynthesisUtterance(textToRead);
-                // msg.lang = 'zh-CN'; // 設置語言為中文
-                // window.speechSynthesis.speak(msg);
+                contentDiv.innerHTML = contentWithDivs;
+
+                // 提取全文內容
+                textToRead = Array.from(contentDiv.querySelectorAll('.line')).map(line => line.textContent).join(' ');
+
+                // 添加點擊事件
+                const lines = contentDiv.querySelectorAll('.line');
+                lines.forEach(line => {
+                    line.addEventListener('click', (e) => {
+                        lines.forEach(line => line.classList.remove('current'));
+                        e.target.classList.add('current');
+                        readLine(line.textContent);
+                    });
+                });
             } catch (error) {
                 console.error('Error loading or reading Markdown file:', error);
-            }
-        }
-        function readText() {
-            const text = textToRead;
-            if (text) {
-                const msg = new SpeechSynthesisUtterance(text);
-                msg.lang = 'zh-CN'; // 設置語言為中文
-                window.speechSynthesis.speak(msg);
-            } else {
-                alert("請輸入一些文字");
+                alert('加载或读取Markdown文件时出错，请检查文件路径和网络连接。');
             }
         }
 
+        // 朗讀指定行
+        function readLine(text) {
+            return new Promise((resolve) => {
+                if (speechSynthesisUtterance) {
+                    window.speechSynthesis.cancel();
+                }
+                speechSynthesisUtterance = new SpeechSynthesisUtterance(text);
+                speechSynthesisUtterance.lang = 'zh-CN'; // 設置語言為中文
+                speechSynthesisUtterance.onend = function(event) {
+                    resolve('朗讀完成');
+                };
+                window.speechSynthesis.speak(speechSynthesisUtterance);
+            })
+        }
+
+        async function readAllLine () {
+            const contentDiv = document.getElementById('content');
+            const lines = contentDiv.querySelectorAll('.line');
+            for (let i = 0; i < lines.length; i++) {
+                // 移除所有行上的current类名
+                lines.forEach(line => line.classList.remove('current'));
+                const line = lines[i];
+                // 为当前点击的行添加current类名
+                line.classList.add('current');
+                await readLine(line.textContent)
+            }
+            return false;
+        }
+
+        // 朗讀全文
+        function readText() {
+            if (textToRead) {
+                if (speechSynthesisUtterance) {
+                    window.speechSynthesis.cancel();
+                }
+                speechSynthesisUtterance = new SpeechSynthesisUtterance(textToRead);
+                speechSynthesisUtterance.lang = 'zh-CN'; // 設置語言為中文
+                speechSynthesisUtterance.onend = function(event) {
+                    alert('全文朗讀完成');
+                };
+                window.speechSynthesis.speak(speechSynthesisUtterance);
+            } else {
+                alert("請先加載Markdown文件");
+            }
+        }
+
+        // 暫停朗讀
+        function pauseReading() {
+            if (speechSynthesisUtterance) {
+                window.speechSynthesis.pause();
+            }
+        }
+
+        // 繼續朗讀
+        function resumeReading() {
+            if (speechSynthesisUtterance) {
+                window.speechSynthesis.resume();
+            }
+        }
+
+        // 初始化列表
         genList(topicList, 'topicNewTestament');
     </script>
 </body>
