@@ -20,6 +20,6 @@ def process_md_file(input_file, output_file):
         file.writelines(processed_lines)
 
 if __name__ == "__main__":
-    input_file = 'Luke_o.md'  # 輸入的Markdown文件
-    output_file = 'Luke.md'  # 輸出的處理後的Markdown文件
+    input_file = 'Galatians_o.md'  # 輸入的Markdown文件
+    output_file = 'Galatians.md'  # 輸出的處理後的Markdown文件
     process_md_file(input_file, output_file)
