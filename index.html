@@ -21,6 +21,9 @@
   <link rel="icon" sizes="192x192" href="./icons/images.png">
 
   <link href="./style/main.css" rel="stylesheet">
+  <link href="./style/newTestament.css" rel="stylesheet">
+
+  <script src="./script/marked.min.js"></script>
 
   <style>
   </style>
@@ -66,6 +69,13 @@
             <img src="./assets/cover/lan_ben.png">
           </label>
         </div>
+        <div class="book-item">
+          <label onclick="toReadPage()">
+            <input type="radio" name="songType" value="NewTestament" onchange="changeBibleFunc()">
+            新約聖經(恢復本)
+            <img src="./assets/cover/newTestament.jpg">
+          </label>
+        </div>
       </div>
     </div>
   
@@ -97,6 +107,22 @@
     <div class="block-area" id="book-song">
       <img id="poetryImage" src="https://www.churchinmontereypark.org/Docs/sg/da/img/D165.jpg" />
     </div>
+
+    <div class="block-area" id="read-page">
+      <div id="readingList">
+        <ul id="topicNewTestament"></ul>
+      </div>
+      <div id="readContral">
+        <button onclick="readAllLine()" id="readAllBtn" class="ReadBtn"></button>
+        <button onclick="pauseReading()" id="pauseBtn" class="ReadBtn"></button>
+        <button onclick="resumeReading()" id="resumeBtn" class="ReadBtn"></button>
+        <button onclick="adjustFontSize(2)" id="fontIncreaseBtn" class="ReadBtn"></button>
+        <button onclick="adjustFontSize(-2)" id="fontDecreaseBtn" class="ReadBtn"></button>
+      </div>
+      <div id="readContentArea">
+        <div id="content"></div>
+      </div>
+    </div>
   </div>
   <div id="body-tab">
     <div class="book-tab-item" id="selectBook"><a href="#book-page" onclick="toBookPage()">換書</a></div>
@@ -124,6 +150,9 @@
     }
 
     function hideAllBlockAreas() {
+      if (speechSynthesisUtterance) {
+        window.speechSynthesis.cancel();
+      }
       var elements = document.getElementsByClassName('block-area');
       for (var i = 0; i < elements.length; i++) {
         elements[i].style.display = 'none';
@@ -136,7 +165,9 @@
     }
 
     function bookLabelMapping (bookLabel) {
-      if(bookLabel === 'B') {
+      if(bookLabel === 'NewTestament') {
+        return '新約聖經 恢復本';
+      } else if (bookLabel === 'B') {
         return '補充本詩歌';
       } else if (bookLabel === 'N') {
         return '新歌頌詠';
@@ -160,10 +191,21 @@
       showCurrentBookTitle();
     }
 
+    function changeBibleFunc () {
+      const radios = document.getElementsByName('songType');
+      for (const radio of radios) {
+        if (radio.checked) {
+          selectedValue = radio.value;
+          break;
+        }
+      }
+      document.getElementById('current-book-title').innerText = bookLabelMapping(selectedValue);
+    }
+
     function toBookPage () {
       hideAllBlockAreas();
       showElement('book-page');
-      document.getElementById('book-song').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('book-page').scrollIntoView({ behavior: 'smooth' });
     }
 
     function toKeyboardPage () {
@@ -177,6 +219,13 @@
       hideAllBlockAreas();
       showElement('book-song');
       document.getElementById('book-song').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function toReadPage () {
+      hideAllBlockAreas();
+      showElement('read-page');
+      document.getElementById('read-page').scrollIntoView({ behavior: 'smooth' });
+      clearInput();
     }
 
     function addNumber(num) {
@@ -288,7 +337,7 @@
       bookSongElement.appendChild(img);
     }
   </script>
-  </script>
+  <script src="./script/newTestament.js"></script>
 </body>
 
 </html>

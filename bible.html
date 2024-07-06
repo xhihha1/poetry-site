@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <title>Markdown 朗讀功能</title>
@@ -156,7 +156,7 @@
                     window.speechSynthesis.cancel();
                 }
                 speechSynthesisUtterance = new SpeechSynthesisUtterance(text);
-                speechSynthesisUtterance.lang = 'zh-CN'; // 設置語言為中文
+                speechSynthesisUtterance.lang = 'zh-TW'; // 設置語言為中文
                 speechSynthesisUtterance.onend = function(event) {
                     resolve('朗讀完成');
                 };
@@ -185,7 +185,7 @@
                     window.speechSynthesis.cancel();
                 }
                 speechSynthesisUtterance = new SpeechSynthesisUtterance(textToRead);
-                speechSynthesisUtterance.lang = 'zh-CN'; // 設置語言為中文
+                speechSynthesisUtterance.lang = 'zh-TW'; // 設置語言為中文
                 speechSynthesisUtterance.onend = function(event) {
                     alert('全文朗讀完成');
                 };
@@ -211,6 +211,12 @@
 
         // 初始化列表
         genList(topicList, 'topicNewTestament');
+        
+        window.addEventListener('beforeunload', function() {
+            if (speechSynthesisUtterance) {
+                window.speechSynthesis.cancel();
+            }
+        });
     </script>
 </body>
 </html>

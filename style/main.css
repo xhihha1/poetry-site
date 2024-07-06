@@ -149,3 +149,28 @@ body {
     display: none;
     text-align: center;
   }
+  .ReadBtn{
+    width: 40px;
+    height: 40px;
+    background-color: transparent;
+    border: none;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 40px;
+    margin: 10px;
+  }
+  #readAllBtn{
+    background-image: url(../assets/icon/text-to-speech.png);
+  }
+  #pauseBtn{
+    background-image: url(../assets/icon/pause.png);
+  }
+  #resumeBtn{
+    background-image: url(../assets/icon/play.png);
+  }
+  #fontIncreaseBtn{
+    background-image: url(../assets/icon/resize-font-increase.png);
+  }
+  #fontDecreaseBtn{
+    background-image: url(../assets/icon/resize-font-decrease.png);
+  }
