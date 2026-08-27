@@ -113,6 +113,7 @@
         <ul id="topicNewTestament"></ul>
       </div>
       <div id="readContral">
+        <button onclick="scrollToBookList()" id="backToListBtn" class="ReadBtn TextBtn">書卷列表</button>
         <button onclick="readAllLine()" id="readAllBtn" class="ReadBtn"></button>
         <button onclick="pauseReading()" id="pauseBtn" class="ReadBtn"></button>
         <button onclick="resumeReading()" id="resumeBtn" class="ReadBtn"></button>
@@ -126,7 +127,7 @@
   </div>
   <div id="body-tab">
     <div class="book-tab-item" id="selectBook"><a href="#book-page" onclick="toBookPage()">換書</a></div>
-    <div class="book-tab-item"><a href="#book-song" onclick="toSongPage()">歌</a></div>
+    <div class="book-tab-item" id="selectSong"><a href="#book-song" onclick="toSongPage()">歌</a></div>
     <div class="book-tab-item" id="selectPage"><a href="#book-keyboard" onclick="toKeyboardPage()">換頁</a></div>
   </div>
   
@@ -202,10 +203,17 @@
       document.getElementById('current-book-title').innerText = bookLabelMapping(selectedValue);
     }
 
+    function setTabBarMode(mode) {
+      var display = mode === 'bible' ? 'none' : '';
+      document.getElementById('selectSong').style.display = display;
+      document.getElementById('selectPage').style.display = display;
+    }
+
     function toBookPage () {
       hideAllBlockAreas();
       showElement('book-page');
       document.getElementById('book-page').scrollIntoView({ behavior: 'smooth' });
+      setTabBarMode('hymn');
     }
 
     function toKeyboardPage () {
@@ -213,12 +221,14 @@
       showElement('book-keyboard');
       document.getElementById('book-keyboard').scrollIntoView({ behavior: 'smooth' });
       clearInput();
+      setTabBarMode('hymn');
     }
 
     function toSongPage () {
       hideAllBlockAreas();
       showElement('book-song');
       document.getElementById('book-song').scrollIntoView({ behavior: 'smooth' });
+      setTabBarMode('hymn');
     }
 
     function toReadPage () {
@@ -226,6 +236,7 @@
       showElement('read-page');
       document.getElementById('read-page').scrollIntoView({ behavior: 'smooth' });
       clearInput();
+      setTabBarMode('bible');
     }
 
     function addNumber(num) {

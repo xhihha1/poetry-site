@@ -56,6 +56,11 @@ code {
     font-size: 18px;
     color: #ede0d4;
 }
+#readingList li.active{
+    font-weight: 700;
+    text-decoration: underline;
+    color: #ddb892;
+}
 #readContral{
     position: -webkit-sticky; /* Safari */
     position: sticky;

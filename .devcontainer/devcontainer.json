@@ -1,0 +1,24 @@
+{
+  "name": "poetry-site",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "poetry-site (static)",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  "postStartCommand": "nohup python3 server.py > /tmp/server.log 2>&1 &",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ritwickdey.LiveServer"
+      ]
+    }
+  }
+}

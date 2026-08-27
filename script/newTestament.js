@@ -110,6 +110,7 @@ const topicList = [{
     }
 ];
 let speechSynthesisUtterance = null;
+let readingGeneration = 0;
 
 // 生成列表項目
 function genList(items, ulId) {
@@ -123,7 +124,9 @@ function genList(items, ulId) {
         const li = document.createElement('li');
         li.textContent = item.name;
         li.addEventListener('click', () => {
-            changTopic(item.file);
+            ul.querySelectorAll('li').forEach(el => el.classList.remove('active'));
+            li.classList.add('active');
+            changTopic(item.file, item.name);
             const element = document.getElementById('readContral');
             element.style.visibility = 'visible';
         });
@@ -131,9 +134,27 @@ function genList(items, ulId) {
     });
 }
 
+// 返回書卷列表
+function scrollToBookList() {
+    const readingList = document.getElementById('readingList');
+    if (readingList) {
+        readingList.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
 // 更改主題並加載相應的Markdown文件
-function changTopic(name) {
+function changTopic(name, displayName) {
+    // 使進行中的朗讀迴圈失效，並停止目前的語音
+    readingGeneration++;
+    if (speechSynthesisUtterance) {
+        window.speechSynthesis.cancel();
+        speechSynthesisUtterance = null;
+    }
     topicFile = name;
+    const titleEl = document.getElementById('current-book-title');
+    if (titleEl && displayName) {
+        titleEl.innerText = `新約聖經 恢復本－${displayName}`;
+    }
     loadAndReadMarkdown();
 }
 
@@ -155,6 +176,7 @@ async function loadAndReadMarkdown() {
         });
 
         contentDiv.innerHTML = contentWithDivs;
+        contentDiv.scrollIntoView({ behavior: 'smooth' });
 
         // 提取全文內容
         textToRead = Array.from(contentDiv.querySelectorAll('.line')).map(line => line.textContent).join(' ');
@@ -163,9 +185,11 @@ async function loadAndReadMarkdown() {
         const lines = contentDiv.querySelectorAll('.line');
         lines.forEach(line => {
             line.addEventListener('click', async (e) => {
+                const myGeneration = ++readingGeneration;
                 let nextLine = line;
                 // e.target.classList.add('current');
                 while (nextLine && nextLine.classList.contains('line')) {
+                    if (myGeneration !== readingGeneration) return;
                     lines.forEach(line => line.classList.remove('current'));
                     nextLine.classList.add('current');
                     await readLine(nextLine.textContent)
@@ -203,9 +227,11 @@ function readLine(text) {
 }
 
 async function readAllLine() {
+    const myGeneration = ++readingGeneration;
     const contentDiv = document.getElementById('content');
     const lines = contentDiv.querySelectorAll('.line');
     for (let i = 0; i < lines.length; i++) {
+        if (myGeneration !== readingGeneration) return false;
         // 移除所有行上的current类名
         lines.forEach(line => line.classList.remove('current'));
         const line = lines[i];

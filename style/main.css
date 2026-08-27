@@ -149,6 +149,10 @@ body {
     display: none;
     text-align: center;
   }
+  #book-song img{
+    max-width: 100%;
+    height: auto;
+  }
   .ReadBtn{
     width: 40px;
     height: 40px;
@@ -173,4 +177,12 @@ body {
   }
   #fontDecreaseBtn{
     background-image: url(../assets/icon/resize-font-decrease.png);
+  }
+  .TextBtn{
+    width: auto;
+    color: #ede0d4;
+    border: 1px solid #ede0d4;
+    border-radius: 5px;
+    font-size: 14px;
+    padding: 0 10px;
   }
