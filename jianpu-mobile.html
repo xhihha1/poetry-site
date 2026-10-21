@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7f5539">
+  <title>簡譜編輯（手機版）</title>
+  <link rel="icon" type="image/png" href="./icons/images.png">
+
+  <style>
+    :root {
+      --bg: #f6f5f1;
+      --panel: #ffffff;
+      --ink: #222;
+      --muted: #777;
+      --accent: #b5452b;
+      --brown: #7f5539;
+      --line: #ccc;
+      --warn: #c97a12;
+      --err: #c0392b;
+      --playing: #2a7f3e;
+      --key: #ffffff;
+      --key-mod: #ede0d4;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    [hidden] { display: none !important; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      overscroll-behavior: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+    }
+
+    /* ---------- top bar ---------- */
+
+    .topbar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      padding-top: calc(6px + env(safe-area-inset-top, 0px));
+      background: var(--brown);
+      color: #ede0d4;
+    }
+
+    .topbar button {
+      flex: 0 0 auto;
+      height: 38px;
+      min-width: 38px;
+      padding: 0 10px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .topbar button:active { background: rgba(255, 255, 255, 0.3); }
+    .topbar button.play { background: #ede0d4; color: var(--brown); font-weight: bold; }
+    .topbar button:disabled { opacity: 0.4; }
+
+    #songTitle {
+      flex: 1 1 auto;
+      min-width: 0;
+      text-align: left;
+      background: none;
+      padding: 0 4px;
+      line-height: 1.15;
+      overflow: hidden;
+    }
+
+    #songTitle .t {
+      display: block;
+      font-size: 15px;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #songTitle .m {
+      display: block;
+      font-size: 12px;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+
+    /* ---------- score ---------- */
+
+    #score {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--panel);
+      padding: 6px 0 24px;
+    }
+
+    .row-svg { display: block; overflow: visible; }
+    .score-line { padding: 0 4px; }
+    .score-line.empty-hint { color: var(--muted); font-size: 13px; padding: 4px 14px; }
+
+    .section-label {
+      margin: 10px 10px 0;
+      padding: 4px 8px;
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+    }
+
+    .blank-line { height: 6px; }
+
+    .note-digit { font-size: 21px; font-family: Georgia, "Times New Roman", serif; }
+    .note-dash { font-size: 21px; }
+    .note-acc { font-size: 13px; }
+    .note-error { fill: var(--err); font-size: 15px; }
+    .playing { fill: var(--playing); font-weight: bold; }
+    .bar-line { stroke: #555; stroke-width: 1; }
+    .beam-line { stroke: var(--ink); stroke-width: 2; }
+    .arc-path { stroke: var(--ink); stroke-width: 1; fill: none; }
+    .tie-path { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+    .dot { fill: var(--ink); }
+    .measure-warn-bg { fill: #fdf0d5; }
+    .selected-bg { fill: rgba(181, 69, 43, 0.14); }
+    .caret { stroke: var(--accent); stroke-width: 2; animation: blink 1s steps(1) infinite; }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ---------- status line ---------- */
+
+    #status {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      font-size: 13px;
+      background: #fffaf5;
+      border-top: 1px solid var(--line);
+      min-height: 30px;
+    }
+
+    #statusText { flex: 1 1 auto; color: var(--muted); }
+    #statusText.ok { color: var(--playing); }
+    #statusText.bad { color: var(--warn); }
+
+    #issueBtn {
+      border: none;
+      border-radius: 12px;
+      padding: 2px 10px;
+      background: var(--err);
+      color: #fff;
+      font-size: 12px;
+    }
+
+    /* ---------- keypad ---------- */
+
+    #keypad {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      padding: 6px;
+      padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+      background: #d9d3c7;
+    }
+
+    #keypad button {
+      height: 46px;
+      padding: 0;
+      border: none;
+      border-radius: 7px;
+      background: var(--key);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+      font-size: 15px;
+      line-height: 1.05;
+    }
+
+    #keypad button.num { font-size: 24px; font-family: Georgia, "Times New Roman", serif; }
+    #keypad button.mod { background: var(--key-mod); font-size: 14px; }
+    #keypad button.mod small { display: block; font-size: 10px; color: var(--muted); }
+    #keypad button.fn { background: #c9c1b2; }
+    #keypad button.wide { grid-column: span 2; }
+    #keypad button.on { background: var(--accent); color: #fff; }
+    #keypad button.on small { color: #fde; }
+    #keypad button:active { filter: brightness(0.85); }
+
+    /* ---------- bottom sheets ---------- */
+
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .sheet {
+      width: 100%;
+      max-height: 85dvh;
+      overflow-y: auto;
+      background: var(--panel);
+      border-radius: 14px 14px 0 0;
+      padding: 8px 16px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .sheet h2 {
+      font-size: 16px;
+      margin: 6px 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sheet h2 button {
+      border: none;
+      background: none;
+      font-size: 15px;
+      color: var(--accent);
+      font-weight: bold;
+      padding: 6px;
+    }
+
+    .sheet .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 15px;
+    }
+
+    .sheet .row > label:first-child { flex: 0 0 4.5em; color: var(--muted); }
+    .sheet .row input[type="text"],
+    .sheet .row input[type="number"],
+    .sheet .row select {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 16px; /* 16px+ keeps iOS from zooming on focus */
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .sheet .row input[type="range"] { flex: 1 1 auto; }
+
+    .stepper { display: flex; align-items: center; gap: 8px; }
+    .stepper button {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 20px;
+    }
+    .stepper span { min-width: 2.4em; text-align: center; }
+
+    .menu-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 13px 4px;
+      border: none;
+      border-bottom: 1px solid #eee;
+      background: none;
+      font-size: 16px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .menu-btn:active { background: #f3efe8; }
+    .menu-btn.danger { color: var(--err); }
+
+    #textSource {
+      width: 100%;
+      height: 50dvh;
+      font-family: "SF Mono", "Menlo", "Consolas", monospace;
+      font-size: 16px;
+      line-height: 1.5;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .issue { padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 14px; }
+    .issue.err { color: var(--err); }
+    .issue.warn { color: var(--warn); }
+
+    .help { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 260px;
+      transform: translateX(-50%);
+      z-index: 60;
+      padding: 8px 14px;
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      font-size: 14px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <button id="homeBtn" aria-label="回首頁">‹</button>
+    <button id="songTitle"><span class="t"></span><span class="m"></span></button>
+    <button id="undoBtn" aria-label="復原" disabled>↶</button>
+    <button id="introBtn">起調</button>
+    <button id="playBtn" class="play">▶</button>
+    <button id="moreBtn" aria-label="更多">⋯</button>
+  </header>
+
+  <main id="score"></main>
+
+  <div id="status">
+    <span id="statusText"></span>
+    <button id="issueBtn" hidden></button>
+  </div>
+
+  <div id="keypad">
+    <button class="num" data-digit="1">1</button>
+    <button class="num" data-digit="2">2</button>
+    <button class="num" data-digit="3">3</button>
+    <button class="num" data-digit="4">4</button>
+    <button class="num" data-digit="5">5</button>
+    <button class="num" data-digit="6">6</button>
+    <button class="num" data-digit="7">7</button>
+
+    <button class="num" data-digit="0">0</button>
+    <button data-insert="-">－<br><small>延長</small></button>
+    <button data-insert="|">|<br><small>小節</small></button>
+    <button data-insert="||">‖<br><small>結束</small></button>
+    <button class="mod" data-mod="slurStart">(<small>圓滑起</small></button>
+    <button class="mod" data-mod="slurEnd">)<small>圓滑止</small></button>
+    <button class="fn" data-action="backspace">⌫</button>
+
+    <button class="mod" data-mod="octUp">˙<small>高音</small></button>
+    <button class="mod" data-mod="octDown">.<small>低音</small></button>
+    <button class="mod" data-mod="sharp">♯<small>升</small></button>
+    <button class="mod" data-mod="flat">♭<small>降</small></button>
+    <button class="mod" data-mod="dot">•<small>附點</small></button>
+    <button class="mod" data-mod="eighth">_<small>八分</small></button>
+    <button class="mod" data-mod="sixteenth">=<small>十六分</small></button>
+
+    <button class="fn" data-action="left">◀</button>
+    <button class="fn" data-action="right">▶</button>
+    <button class="mod" data-mod="natural">♮<small>還原</small></button>
+    <button data-insert="~">⌒<br><small>連結</small></button>
+    <button class="fn" data-action="label">標籤</button>
+    <button class="fn wide" data-action="newline">↵ 換行</button>
+  </div>
+
+  <!-- 更多 -->
+  <div class="backdrop" id="moreSheet" hidden>
+    <div class="sheet">
+      <h2>設定與檔案 <button data-close>完成</button></h2>
+      <div class="row">
+        <label>移調</label>
+        <div class="stepper">
+          <button id="transDown">−</button>
+          <span id="transposeVal">0</span>
+          <button id="transUp">＋</button>
+        </div>
+        <span id="actualKey" class="help"></span>
+      </div>
+      <div class="row">
+        <label>速度</label>
+        <input type="range" id="tempoSlider" min="40" max="160" value="72">
+        <span id="tempoVal">72</span>
+      </div>
+      <div class="row">
+        <label>試聽</label>
+        <input type="checkbox" id="previewToggle" checked>
+        <span class="help">輸入或修改音符時發出聲音</span>
+      </div>
+      <button class="menu-btn" id="libraryMenuBtn">📚 開啟詩歌（從詩歌庫）</button>
+      <button class="menu-btn" id="infoMenuBtn">📝 歌曲資訊（標題、調號、拍號）</button>
+      <button class="menu-btn" id="textMenuBtn">⌨️ 文字模式（貼上／直接編輯原始碼）</button>
+      <button class="menu-btn" id="exportBtn">⬇️ 匯出 JSON</button>
+      <button class="menu-btn" id="importBtn">⬆️ 匯入 JSON</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <button class="menu-btn" id="helpMenuBtn">❓ 操作說明</button>
+      <a class="menu-btn" href="./jianpu-editor.html">🖥️ 開啟桌機版編輯器</a>
+      <button class="menu-btn" id="exampleBtn">📄 載入範例（大本 178 首）</button>
+      <button class="menu-btn danger" id="newSongBtn">🗑️ 新歌（清空目前內容）</button>
+    </div>
+  </div>
+
+  <!-- 歌曲資訊 -->
+  <div class="backdrop" id="infoSheet" hidden>
+    <div class="sheet">
+      <h2>歌曲資訊 <button id="infoSave">完成</button></h2>
+      <div class="row"><label for="fBook">詩歌本</label><select id="fBook" class="book-select"></select></div>
+      <div class="row"><label for="fTitle">標題</label><input type="text" id="fTitle"></div>
+      <div class="row"><label for="fNumber">編號</label><input type="text" id="fNumber" inputmode="numeric"></div>
+      <div class="row"><label for="fKey">調號 1=</label><select id="fKey"></select></div>
+      <div class="row">
+        <label for="fTime">拍號</label>
+        <select id="fTime">
+          <option>2/4</option><option>3/4</option><option>4/4</option>
+          <option>3/8</option><option>6/8</option><option>9/8</option><option>12/8</option>
+        </select>
+      </div>
+      <div class="row"><label for="fTempo">速度</label><input type="number" id="fTempo" inputmode="numeric" min="20" max="240"></div>
+    </div>
+  </div>
+
+  <!-- 詩歌庫 -->
+  <div class="backdrop" id="librarySheet" hidden>
+    <div class="sheet">
+      <h2>開啟詩歌 <button data-close>取消</button></h2>
+      <div class="row"><label for="libBook">詩歌本</label><select id="libBook" class="book-select"></select></div>
+      <div class="row"><label for="libNumber">編號</label><input type="number" id="libNumber" inputmode="numeric" min="1"></div>
+      <div class="row"><button class="menu-btn" id="libOpen">開啟</button></div>
+      <p class="help">從 jianpu/ 目錄讀取已收集的 JSON（例如 jianpu/D/D_178.json）。目前內容會被取代，可以按 ↶ 復原。</p>
+    </div>
+  </div>
+
+  <!-- 文字模式 -->
+  <div class="backdrop" id="textSheet" hidden>
+    <div class="sheet">
+      <h2>文字模式 <button id="textApply">套用</button></h2>
+      <textarea id="textSource" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+      <p class="help">語法與桌機版相同（見 SPEC.md）。按「套用」後回到點選模式。</p>
+    </div>
+  </div>
+
+  <!-- 錯誤／警告 -->
+  <div class="backdrop" id="issueSheet" hidden>
+    <div class="sheet">
+      <h2>需要檢查的地方 <button data-close>關閉</button></h2>
+      <div id="issueList"></div>
+    </div>
+  </div>
+
+  <!-- 說明 -->
+  <div class="backdrop" id="helpSheet" hidden>
+    <div class="sheet">
+      <h2>操作說明 <button data-close>關閉</button></h2>
+      <div class="help">
+        <p><b>輸入音符：</b>按 0–7 在游標處加入一個音（0 是休止符）。</p>
+        <p><b>修改音符：</b>點譜面上的音把它選起來（淡紅底），再按「高音、低音、♯、♭、附點、八分、十六分、圓滑起／止」切換。剛輸入的音會自動被選取，所以可以「5 → 附點」連續按。</p>
+        <p><b>延長、小節：</b>「－」延長前一個音一拍；「|」小節線；「‖」結束線；「⌒」把前後兩個同音連起來。</p>
+        <p><b>游標：</b>◀ ▶ 移動，⌫ 刪除選取的記號；「↵ 換行」在游標處斷行；「標籤」插入段落名稱（如「副歌」），點標籤可修改或刪除。</p>
+        <p><b>拍數：</b>下方狀態列會顯示游標所在小節的拍數，拍數不對的小節會有黃色底。</p>
+        <p><b>播放：</b>▶ 從頭播放、「起調」先響主音再播第一行；移調與速度在 ⋯ 裡面。</p>
+        <p>內容會自動保存在這台裝置上，和桌機版編輯器共用同一份資料。</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" hidden></div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ---------------------------------------------------------------------
+    // Constants
+    // ---------------------------------------------------------------------
+
+    // Shared with jianpu-editor.html so both pages edit the same song.
+    var LS_KEY = 'jianpu-editor:source-v1';
+    var LS_PREVIEW_KEY = 'jianpu-mobile:preview';
+
+    var KEY_TO_MIDI = {
+      C: 60, Db: 61, D: 62, Eb: 63, E: 64, F: 65,
+      'F#': 66, Gb: 66, G: 67, Ab: 68, A: 69, Bb: 70, B: 71
+    };
+    var KEY_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+    var KEY_NAMES_BY_SEMITONE = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+    var DEGREE_SEMITONE = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 };
+    var ACC_SYMBOL = { '#': '♯', b: '♭', n: '♮' };
+
+    var EXAMPLE_SONG = 'D_178';
+    var LS_BOOK_KEY = 'jianpu-mobile:book';
+
+    var BOOKS = [
+      { code: 'D', name: '大本詩歌', pad: 3 },
+      { code: 'B', name: '補充本詩歌', pad: 4 },
+      { code: 'N', name: '新歌頌詠', pad: 3 },
+      { code: 'X', name: '新詩(紅)', pad: 3 },
+      { code: 'L', name: '新詩(藍)', pad: 3 }
+    ];
+
+    // Song library: jianpu/{book}/{book}_{NNN}.json, same numbering as the song images.
+    function songKey(book, number) {
+      var info = BOOKS.filter(function (b) { return b.code === book; })[0] || BOOKS[0];
+      return info.code + '_' + String(parseInt(number, 10)).padStart(info.pad, '0');
+    }
+
+    function fetchSong(key) {
+      var book = key.split('_')[0];
+      return fetch('./jianpu/' + book + '/' + key + '.json', { cache: 'no-cache' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('not found');
+          return res.json();
+        })
+        .then(function (obj) {
+          if (!obj || typeof obj.source !== 'string') throw new Error('bad json');
+          if (!obj.book) obj.book = book;
+          return obj;
+        });
+    }
+
+    var NEW_SONG_SOURCE = 'title: 新歌\nnumber: \nkey: C\ntime: 4/4\ntempo: 72\n\n';
+
+    function keyLabel(k) {
+      return k.length === 2 && k.charAt(1) === 'b' ? k.charAt(0) + '♭' : k.replace('#', '♯');
+    }
+
+    // ---------------------------------------------------------------------
+    // Document model: header + lines. Music lines are token arrays, so a
+    // tap on the score maps straight back to (line, token index).
+    // ---------------------------------------------------------------------
+
+    function tokenize(line) {
+      return line.replace(/(\|\|?)/g, ' $1 ').trim().split(/\s+/).filter(Boolean);
+    }
+
+    function fromSource(text) {
+      var lines = text.replace(/\r\n/g, '\n').split('\n');
+      var header = { title: '', number: '', key: 'C', time: '4/4', tempo: 72 };
+      var re = /^(title|number|key|time|tempo)\s*:\s*(.*)$/i;
+      var i = 0;
+      for (; i < lines.length; i++) {
+        var m = re.exec(lines[i].trim());
+        if (!m) break;
+        var field = m[1].toLowerCase();
+        header[field] = field === 'tempo' ? (parseFloat(m[2]) || 72) : m[2].trim();
+      }
+      if (!(header.key in KEY_TO_MIDI)) header.key = 'C';
+      if (!/^\d+\/\d+$/.test(header.time)) header.time = '4/4';
+
+      var body = [];
+      for (; i < lines.length; i++) {
+        var trimmed = lines[i].trim();
+        if (trimmed === '') {
+          // collapse runs of blank lines and drop leading ones
+          if (body.length && body[body.length - 1].type !== 'blank') body.push({ type: 'blank' });
+        } else if (trimmed.charAt(0) === '#' && !/[0-9]/.test(trimmed.charAt(1) || '')) {
+          body.push({ type: 'label', text: trimmed.replace(/^#\s*/, '') });
+        } else {
+          body.push({ type: 'music', tokens: tokenize(trimmed) });
+        }
+      }
+      while (body.length && body[body.length - 1].type === 'blank') body.pop();
+      if (!body.some(function (l) { return l.type === 'music'; })) body.push({ type: 'music', tokens: [] });
+      return { header: header, lines: body };
+    }
+
+    function toSource(d) {
+      var h = d.header;
+      var out = [
+        'title: ' + h.title,
+        'number: ' + h.number,
+        'key: ' + h.key,
+        'time: ' + h.time,
+        'tempo: ' + h.tempo,
+        ''
+      ];
+      d.lines.forEach(function (l) {
+        if (l.type === 'blank') out.push('');
+        else if (l.type === 'label') out.push('# ' + l.text);
+        else out.push(l.tokens.join(' '));
+      });
+      return out.join('\n');
+    }
+
+    // One note/rest token <-> editable fields.
+    function parseNoteToken(tok) {
+      var s = tok;
+      var slurStart = false, slurEnd = false;
+      if (s.charAt(0) === '(') { slurStart = true; s = s.slice(1); }
+      if (s.charAt(s.length - 1) === ')') { slurEnd = true; s = s.slice(0, -1); }
+      var m = /^([#bn])?([0-7])([',._=]*)$/.exec(s);
+      if (!m) return null;
+      var n = parseInt(m[2], 10);
+      var up = 0, down = 0, dot = false, under = 0;
+      for (var i = 0; i < m[3].length; i++) {
+        var ch = m[3].charAt(i);
+        if (ch === "'") up++;
+        else if (ch === ',') down++;
+        else if (ch === '.') dot = true;
+        else if (ch === '_') under++;
+        else if (ch === '=') under = 2;
+      }
+      return {
+        n: n,
+        acc: n === 0 ? null : (m[1] || null),
+        oct: n === 0 ? 0 : up - down,
+        dot: dot,
+        under: Math.min(under, 2),
+        slurStart: slurStart,
+        slurEnd: slurEnd
+      };
+    }
+
+    function noteToToken(p) {
+      var oct = p.oct > 0 ? new Array(p.oct + 1).join("'") : new Array(-p.oct + 1).join(',');
+      return (p.slurStart ? '(' : '') + (p.acc || '') + p.n + oct + (p.dot ? '.' : '') +
+        (p.under === 2 ? '__' : p.under === 1 ? '_' : '') + (p.slurEnd ? ')' : '');
+    }
+
+    function noteDur(p) {
+      return (p.under === 2 ? 0.25 : p.under === 1 ? 0.5 : 1) * (p.dot ? 1.5 : 1);
+    }
+
+    // ---------------------------------------------------------------------
+    // Analysis: timing, beams, ties, beat-count warnings, playback events
+    // ---------------------------------------------------------------------
+
+    function itemId(li, ti) { return 'n-' + li + '-' + ti; }
+
+    function analyze(d) {
+      var tp = d.header.time.split('/');
+      var timeNum = parseInt(tp[0], 10) || 4;
+      var timeDen = parseInt(tp[1], 10) || 4;
+      var expected = timeNum * (4 / timeDen);
+      var state = { owner: null, pendingTie: false };
+      var issues = [];
+      var lines = [];
+      var musicNo = 0;
+
+      d.lines.forEach(function (line, li) {
+        if (line.type !== 'music') {
+          if (line.type === 'label') state = { owner: null, pendingTie: false };
+          lines.push({ type: line.type, li: li, text: line.text });
+          return;
+        }
+        musicNo++;
+        var measures = [];
+        var cur = { items: [], closed: false };
+
+        line.tokens.forEach(function (tok, ti) {
+          var it = { ti: ti, tok: tok, id: itemId(li, ti) };
+          if (tok === '|' || tok === '||') {
+            it.kind = tok === '||' ? 'final' : 'bar';
+            cur.items.push(it);
+            cur.closed = true;
+            measures.push(cur);
+            cur = { items: [], closed: false };
+            return;
+          }
+          if (tok === '-') {
+            it.kind = 'dash';
+            it.dur = 1;
+            if (state.owner) {
+              state.owner.playDur += 1;
+              state.owner.ids.push(it.id);
+            } else {
+              it.kind = 'error';
+              issues.push({ type: 'err', li: li, ti: ti, msg: '第 ' + musicNo + ' 行：「－」前面沒有可以延長的音' });
+            }
+          } else if (tok === '~') {
+            it.kind = 'tie';
+            state.pendingTie = true;
+          } else {
+            var p = parseNoteToken(tok);
+            if (!p) {
+              it.kind = 'error';
+              it.dur = 1;
+              issues.push({ type: 'err', li: li, ti: ti, msg: '第 ' + musicNo + ' 行：看不懂的記號「' + tok + '」' });
+              state.pendingTie = false;
+            } else {
+              it.kind = p.n === 0 ? 'rest' : 'note';
+              it.p = p;
+              it.dur = noteDur(p);
+              var o = state.owner;
+              if (state.pendingTie && o && o.kind === 'note' && it.kind === 'note' &&
+                  o.p.n === p.n && o.p.acc === p.acc && o.p.oct === p.oct) {
+                it.tiedFrom = o;
+                o.playDur += it.dur;
+                o.ids.push(it.id);
+              } else {
+                it.playDur = it.dur;
+                it.ids = [it.id];
+                state.owner = it;
+              }
+              state.pendingTie = false;
+            }
+          }
+          cur.items.push(it);
+        });
+        if (cur.items.length) measures.push(cur);
+
+        measures.forEach(function (m, mi) {
+          var cum = 0;
+          var timed = [];
+          m.items.forEach(function (it) {
+            if (it.dur == null) return;
+            it.start = cum;
+            cum += it.dur;
+            timed.push(it);
+          });
+          m.beats = cum;
+          m.expected = expected;
+          // an unfinished last measure only warns once it overflows
+          m.mismatch = timed.length > 0 && (m.closed ? Math.abs(cum - expected) > 1e-6 : cum > expected + 1e-6);
+          if (m.mismatch) {
+            issues.push({
+              type: 'warn', li: li, ti: m.items[0].ti,
+              msg: '第 ' + musicNo + ' 行第 ' + (mi + 1) + ' 小節：' + fmtBeats(cum) + ' 拍（應為 ' + fmtBeats(expected) + ' 拍）'
+            });
+          }
+
+          // beam groups: consecutive short notes/rests in the same beat
+          m.beams = [];
+          var g = null;
+          timed.forEach(function (it) {
+            var short = (it.kind === 'note' || it.kind === 'rest') && it.dur < 1 - 1e-9;
+            var beat = Math.floor(it.start + 1e-9);
+            if (short && g && g.beat === beat) { g.items.push(it); return; }
+            g = short ? { beat: beat, items: [it] } : null;
+            if (g) m.beams.push(g);
+          });
+        });
+
+        lines.push({ type: 'music', li: li, measures: measures, musicNo: musicNo });
+      });
+
+      return { lines: lines, issues: issues, expected: expected, timeDen: timeDen };
+    }
+
+    function fmtBeats(b) { return String(Math.round(b * 100) / 100); }
+
+    function noteMidi(header, transpose, p) {
+      var root = KEY_TO_MIDI[header.key] != null ? KEY_TO_MIDI[header.key] : 60;
+      var accOffset = p.acc === '#' ? 1 : p.acc === 'b' ? -1 : 0;
+      return root + (DEGREE_SEMITONE[p.n] || 0) + accOffset + 12 * p.oct + transpose;
+    }
+
+    function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+    function actualKeyName(header, transpose) {
+      var root = KEY_TO_MIDI[header.key] != null ? KEY_TO_MIDI[header.key] : 60;
+      return KEY_NAMES_BY_SEMITONE[((root + transpose - 60) % 12 + 12) % 12];
+    }
+
+    function quarterSeconds(timeDen, bpm) {
+      return (60 / bpm) * (timeDen / 4);
+    }
+
+    function buildEvents(an, musicLines, transpose, bpm) {
+      var qsec = quarterSeconds(an.timeDen, bpm);
+      var events = [];
+      var t = 0;
+      musicLines.forEach(function (line) {
+        line.measures.forEach(function (m) {
+          m.items.forEach(function (it) {
+            if (it.kind !== 'note' || it.tiedFrom) return;
+            events.push({
+              startSec: (t + it.start) * qsec,
+              durSec: it.playDur * qsec,
+              midi: noteMidi(doc.header, transpose, it.p),
+              ids: it.ids
+            });
+          });
+          t += m.beats;
+        });
+      });
+      return events;
+    }
+
+    // ---------------------------------------------------------------------
+    // State
+    // ---------------------------------------------------------------------
+
+    var doc = null;
+    var an = null;
+    var cursor = { li: 0, pos: 0 }; // caret sits after tokens[pos - 1] (the "selected" token)
+    var undoStack = [];
+    var transposeVal = 0;
+    var previewOn = true;
+    var currentBook = 'D'; // not part of the text syntax, so kept beside the source
+
+    function saveLocal() {
+      try { localStorage.setItem(LS_KEY, toSource(doc)); } catch (e) { /* ignore */ }
+    }
+    function loadLocal() {
+      try { return localStorage.getItem(LS_KEY); } catch (e) { return null; }
+    }
+    function setBook(book) {
+      if (!BOOKS.some(function (b) { return b.code === book; })) return;
+      currentBook = book;
+      try { localStorage.setItem(LS_BOOK_KEY, book); } catch (e) { /* ignore */ }
+    }
+
+    function firstMusicLine() {
+      for (var i = 0; i < doc.lines.length; i++) if (doc.lines[i].type === 'music') return i;
+      return 0;
+    }
+
+    function curLine() { return doc.lines[cursor.li]; }
+
+    function loadDoc(text, keepCursor) {
+      doc = fromSource(text);
+      if (!keepCursor || !doc.lines[cursor.li] || doc.lines[cursor.li].type !== 'music') {
+        // start at the end of the last music line, ready to keep typing
+        for (var i = doc.lines.length - 1; i >= 0; i--) {
+          if (doc.lines[i].type === 'music') { cursor = { li: i, pos: doc.lines[i].tokens.length }; break; }
+        }
+      }
+      cursor.pos = Math.min(cursor.pos, curLine().tokens.length);
+      document.getElementById('tempoSlider').value = doc.header.tempo;
+      document.getElementById('tempoVal').textContent = doc.header.tempo;
+    }
+
+    // Every edit goes through here: snapshot for undo, mutate, persist, redraw.
+    function edit(fn) {
+      var before = { src: toSource(doc), cursor: { li: cursor.li, pos: cursor.pos } };
+      if (fn() === false) return;
+      undoStack.push(before);
+      if (undoStack.length > 200) undoStack.shift();
+      saveLocal();
+      render(true);
+    }
+
+    function undo() {
+      var s = undoStack.pop();
+      if (!s) return;
+      cursor = s.cursor;
+      loadDoc(s.src, true);
+      saveLocal();
+      render(true);
+    }
+
+    // ---------------------------------------------------------------------
+    // Editing operations
+    // ---------------------------------------------------------------------
+
+    function insertToken(tok) {
+      edit(function () {
+        curLine().tokens.splice(cursor.pos, 0, tok);
+        cursor.pos++;
+      });
+      var p = parseNoteToken(tok);
+      if (p && p.n !== 0) preview(p);
+    }
+
+    function selectedNote() {
+      if (cursor.pos === 0) return null;
+      return parseNoteToken(curLine().tokens[cursor.pos - 1]);
+    }
+
+    var MODS = {
+      octUp: function (p) { if (p.n === 0) return false; p.oct = Math.min(p.oct + 1, 2); },
+      octDown: function (p) { if (p.n === 0) return false; p.oct = Math.max(p.oct - 1, -2); },
+      sharp: function (p) { if (p.n === 0) return false; p.acc = p.acc === '#' ? null : '#'; },
+      flat: function (p) { if (p.n === 0) return false; p.acc = p.acc === 'b' ? null : 'b'; },
+      natural: function (p) { if (p.n === 0) return false; p.acc = p.acc === 'n' ? null : 'n'; },
+      dot: function (p) { p.dot = !p.dot; },
+      eighth: function (p) { p.under = p.under === 1 ? 0 : 1; },
+      sixteenth: function (p) { p.under = p.under === 2 ? 0 : 2; },
+      slurStart: function (p) { p.slurStart = !p.slurStart; },
+      slurEnd: function (p) { p.slurEnd = !p.slurEnd; }
+    };
+
+    var MOD_ACTIVE = {
+      octUp: function (p) { return p.oct > 0; },
+      octDown: function (p) { return p.oct < 0; },
+      sharp: function (p) { return p.acc === '#'; },
+      flat: function (p) { return p.acc === 'b'; },
+      natural: function (p) { return p.acc === 'n'; },
+      dot: function (p) { return p.dot; },
+      eighth: function (p) { return p.under === 1; },
+      sixteenth: function (p) { return p.under === 2; },
+      slurStart: function (p) { return p.slurStart; },
+      slurEnd: function (p) { return p.slurEnd; }
+    };
+
+    function applyMod(name) {
+      var p = selectedNote();
+      if (!p) { toast('請先點選一個音'); return; }
+      if (MODS[name](p) === false) { toast('休止符不能加這個記號'); return; }
+      edit(function () { curLine().tokens[cursor.pos - 1] = noteToToken(p); });
+      if (p.n !== 0 && /^(oct|sharp|flat|natural)/.test(name)) preview(p);
+    }
+
+    function prevMusicLine(li) {
+      for (var i = li - 1; i >= 0; i--) if (doc.lines[i].type === 'music') return i;
+      return -1;
+    }
+    function nextMusicLine(li) {
+      for (var i = li + 1; i < doc.lines.length; i++) if (doc.lines[i].type === 'music') return i;
+      return -1;
+    }
+
+    function backspace() {
+      edit(function () {
+        var line = curLine();
+        if (cursor.pos > 0) {
+          line.tokens.splice(cursor.pos - 1, 1);
+          cursor.pos--;
+          return;
+        }
+        if (cursor.li === 0) return false;
+        var prev = doc.lines[cursor.li - 1];
+        if (prev.type === 'music') {
+          // join with the previous line
+          var len = prev.tokens.length;
+          prev.tokens = prev.tokens.concat(line.tokens);
+          doc.lines.splice(cursor.li, 1);
+          cursor = { li: cursor.li - 1, pos: len };
+        } else {
+          // remove the label / blank line sitting just above
+          doc.lines.splice(cursor.li - 1, 1);
+          cursor.li--;
+        }
+      });
+    }
+
+    function newline() {
+      edit(function () {
+        var line = curLine();
+        var rest = line.tokens.splice(cursor.pos);
+        doc.lines.splice(cursor.li + 1, 0, { type: 'music', tokens: rest });
+        cursor = { li: cursor.li + 1, pos: 0 };
+      });
+    }
+
+    function insertLabel() {
+      var text = window.prompt('段落名稱（例如：副歌、第二段）', '');
+      if (!text || !text.trim()) return;
+      edit(function () {
+        var line = curLine();
+        var label = { type: 'label', text: text.trim() };
+        if (cursor.pos === 0) {
+          doc.lines.splice(cursor.li, 0, label);
+          cursor.li++;
+        } else {
+          var rest = line.tokens.splice(cursor.pos);
+          doc.lines.splice(cursor.li + 1, 0, label, { type: 'music', tokens: rest });
+          cursor = { li: cursor.li + 2, pos: 0 };
+        }
+      });
+    }
+
+    function editLabel(li) {
+      var text = window.prompt('修改段落名稱（清空則刪除）', doc.lines[li].text);
+      if (text === null) return;
+      edit(function () {
+        if (text.trim()) {
+          doc.lines[li].text = text.trim();
+        } else {
+          doc.lines.splice(li, 1);
+          if (cursor.li > li) cursor.li--;
+        }
+      });
+    }
+
+    function moveCursor(dir) {
+      var line = curLine();
+      if (dir < 0) {
+        if (cursor.pos > 0) cursor.pos--;
+        else {
+          var p = prevMusicLine(cursor.li);
+          if (p >= 0) cursor = { li: p, pos: doc.lines[p].tokens.length };
+        }
+      } else {
+        if (cursor.pos < line.tokens.length) cursor.pos++;
+        else {
+          var n = nextMusicLine(cursor.li);
+          if (n >= 0) cursor = { li: n, pos: 0 };
+        }
+      }
+      render(true);
+    }
+
+    // ---------------------------------------------------------------------
+    // Rendering
+    // ---------------------------------------------------------------------
+
+    var COL_W = 30, TIE_W = 14, BAR_W = 14, PAD_L = 12, PAD_R = 8, ROW_H = 92, BASE_Y = 50;
+
+    function svgEl(tag, attrs, text) {
+      var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      if (text != null) e.textContent = text;
+      return e;
+    }
+
+    function itemWidth(it) {
+      if (it.kind === 'tie') return TIE_W;
+      if (it.kind === 'bar' || it.kind === 'final') return BAR_W;
+      return COL_W;
+    }
+
+    function measureWidth(m) {
+      return m.items.reduce(function (w, it) { return w + itemWidth(it); }, 0);
+    }
+
+    function render(scrollToCaret) {
+      an = analyze(doc);
+      var h = doc.header;
+      var titleEl = document.getElementById('songTitle');
+      titleEl.querySelector('.t').textContent = (h.number ? h.number + ' ' : '') + (h.title || '（未命名）');
+      titleEl.querySelector('.m').textContent = '1=' + keyLabel(h.key) + '　' + h.time + '　♩=' + h.tempo + (transposeVal ? '　移調 ' + signed(transposeVal) : '');
+
+      var scoreEl = document.getElementById('score');
+      var maxW = scoreEl.clientWidth - 8;
+      var frag = document.createDocumentFragment();
+
+      an.lines.forEach(function (line) {
+        if (line.type === 'blank') {
+          var b = document.createElement('div');
+          b.className = 'blank-line';
+          frag.appendChild(b);
+        } else if (line.type === 'label') {
+          var lbl = document.createElement('div');
+          lbl.className = 'section-label';
+          lbl.textContent = line.text;
+          lbl.addEventListener('click', function () { editLabel(line.li); });
+          frag.appendChild(lbl);
+        } else {
+          renderMusicLine(line, maxW, frag);
+        }
+      });
+
+      scoreEl.innerHTML = '';
+      scoreEl.appendChild(frag);
+      updateStatus();
+      updateKeypad();
+      document.getElementById('undoBtn').disabled = undoStack.length === 0;
+
+      if (scrollToCaret) {
+        var caret = scoreEl.querySelector('.caret');
+        if (caret) caret.closest('svg').scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function renderMusicLine(line, maxW, frag) {
+      // pack whole measures into rows that fit the screen width
+      var rows = [];
+      var row = { measures: [], w: PAD_L };
+      line.measures.forEach(function (m) {
+        var mw = measureWidth(m);
+        if (row.measures.length && row.w + mw > maxW - PAD_R) {
+          rows.push(row);
+          row = { measures: [], w: PAD_L };
+        }
+        row.measures.push(m);
+        row.w += mw;
+      });
+      rows.push(row);
+
+      var wrap = document.createElement('div');
+      wrap.className = 'score-line';
+      var slurOpen = { x: null };
+      rows.forEach(function (r, ri) {
+        wrap.appendChild(renderRow(line.li, r, ri === 0, slurOpen, maxW));
+      });
+      frag.appendChild(wrap);
+    }
+
+    function renderRow(li, row, isFirstRow, slurOpen, maxW) {
+      var placed = [];
+      var x = PAD_L;
+      row.measures.forEach(function (m) {
+        m.x = x;
+        m.items.forEach(function (it) {
+          it.x = x;
+          it.w = itemWidth(it);
+          placed.push(it);
+          x += it.w;
+        });
+      });
+      var width = Math.max(x + PAD_R, Math.min(maxW, 120));
+      var svg = svgEl('svg', { class: 'row-svg', width: width, height: ROW_H, viewBox: '0 0 ' + width + ' ' + ROW_H });
+      var isCurLine = cursor.li === li;
+
+      // beat-count warnings (bar glyph excluded)
+      row.measures.forEach(function (m) {
+        if (!m.mismatch) return;
+        var last = m.items[m.items.length - 1];
+        var end = (last.kind === 'bar' || last.kind === 'final') ? last.x : last.x + last.w;
+        svg.appendChild(svgEl('rect', { x: m.x, y: 6, width: end - m.x, height: ROW_H - 12, class: 'measure-warn-bg' }));
+      });
+
+      // selected token background
+      if (isCurLine && cursor.pos > 0) {
+        placed.forEach(function (it) {
+          if (it.ti === cursor.pos - 1) {
+            svg.appendChild(svgEl('rect', { x: it.x + 1, y: 10, width: it.w - 2, height: ROW_H - 20, rx: 4, class: 'selected-bg' }));
+          }
+        });
+      }
+
+      // underlines: shared within a beat, single for lone short notes
+      row.measures.forEach(function (m) {
+        m.beams.forEach(function (g) {
+          var a = g.items[0], b = g.items[g.items.length - 1];
+          beam(svg, a.x + COL_W / 2 - 9, b.x + COL_W / 2 + 9, BASE_Y + 12);
+          g.items.forEach(function (it) {
+            if (it.p.under === 2) beam(svg, it.x + COL_W / 2 - 9, it.x + COL_W / 2 + 9, BASE_Y + 17);
+          });
+        });
+      });
+
+      // slurs (may continue across wrapped rows)
+      placed.forEach(function (it) {
+        if (!it.p) return;
+        var cx = it.x + COL_W / 2;
+        if (it.p.slurStart) slurOpen.x = cx;
+        if (it.p.slurEnd && slurOpen.x != null) {
+          arc(svg, slurOpen.x, cx);
+          slurOpen.x = null;
+        }
+      });
+      if (slurOpen.x != null) {
+        arc(svg, slurOpen.x, width - 4);
+        slurOpen.x = PAD_L - 4;
+      }
+
+      placed.forEach(function (it) { drawItem(svg, it); });
+
+      // caret
+      var caretX = null;
+      if (isCurLine) {
+        if (cursor.pos === 0 && isFirstRow) caretX = PAD_L - 3;
+        placed.forEach(function (it) { if (it.ti === cursor.pos - 1) caretX = it.x + it.w; });
+      }
+      if (caretX != null) {
+        svg.appendChild(svgEl('line', { x1: caretX, x2: caretX, y1: 18, y2: ROW_H - 14, class: 'caret' }));
+      }
+
+      svg.addEventListener('click', function (e) {
+        var px = e.clientX - svg.getBoundingClientRect().left;
+        var pos;
+        if (!placed.length) pos = 0;
+        else if (px < placed[0].x) pos = placed[0].ti;
+        else {
+          pos = placed[placed.length - 1].ti + 1;
+          for (var i = 0; i < placed.length; i++) {
+            if (px >= placed[i].x && px < placed[i].x + placed[i].w) { pos = placed[i].ti + 1; break; }
+          }
+        }
+        cursor = { li: li, pos: pos };
+        render(false);
+        var p = selectedNote();
+        if (p && p.n !== 0) preview(p);
+      });
+
+      return svg;
+    }
+
+    function beam(svg, x1, x2, y) {
+      svg.appendChild(svgEl('line', { x1: x1, x2: x2, y1: y, y2: y, class: 'beam-line' }));
+    }
+
+    function arc(svg, x1, x2) {
+      var y = BASE_Y - 22;
+      svg.appendChild(svgEl('path', {
+        d: 'M ' + x1 + ' ' + y + ' Q ' + (x1 + x2) / 2 + ' ' + (y - 12) + ' ' + x2 + ' ' + y,
+        class: 'arc-path'
+      }));
+    }
+
+    function drawItem(svg, it) {
+      var cx = it.x + it.w / 2;
+
+      if (it.kind === 'bar') {
+        svg.appendChild(svgEl('line', { x1: cx, x2: cx, y1: 16, y2: ROW_H - 16, class: 'bar-line' }));
+        return;
+      }
+      if (it.kind === 'final') {
+        svg.appendChild(svgEl('line', { x1: cx - 2, x2: cx - 2, y1: 12, y2: ROW_H - 12, class: 'bar-line' }));
+        svg.appendChild(svgEl('line', { x1: cx + 2, x2: cx + 2, y1: 12, y2: ROW_H - 12, class: 'bar-line', 'stroke-width': 2.5 }));
+        return;
+      }
+      if (it.kind === 'tie') {
+        svg.appendChild(svgEl('path', { d: 'M ' + (cx - 6) + ' ' + (BASE_Y - 8) + ' Q ' + cx + ' ' + (BASE_Y - 16) + ' ' + (cx + 6) + ' ' + (BASE_Y - 8), class: 'tie-path' }));
+        return;
+      }
+      if (it.kind === 'dash') {
+        svg.appendChild(svgEl('text', { x: cx, y: BASE_Y, 'text-anchor': 'middle', class: 'note-dash', id: it.id }, '-'));
+        return;
+      }
+      if (it.kind === 'error') {
+        var t = svgEl('text', { x: cx, y: BASE_Y, 'text-anchor': 'middle', class: 'note-error' }, it.tok);
+        svg.appendChild(t);
+        return;
+      }
+
+      var p = it.p;
+      svg.appendChild(svgEl('text', { x: cx, y: BASE_Y, 'text-anchor': 'middle', class: 'note-digit', id: it.id }, String(p.n)));
+      if (p.acc) svg.appendChild(svgEl('text', { x: cx - 10, y: BASE_Y - 13, 'text-anchor': 'middle', class: 'note-acc' }, ACC_SYMBOL[p.acc]));
+      if (p.dot) svg.appendChild(svgEl('circle', { cx: cx + 10, cy: BASE_Y - 5, r: 2, class: 'dot' }));
+      var i;
+      for (i = 0; i < Math.max(p.oct, 0); i++) {
+        svg.appendChild(svgEl('circle', { cx: cx, cy: BASE_Y - 20 - i * 6, r: 1.8, class: 'dot' }));
+      }
+      var below = BASE_Y + (p.under === 2 ? 23 : p.under === 1 ? 18 : 9);
+      for (i = 0; i < Math.max(-p.oct, 0); i++) {
+        svg.appendChild(svgEl('circle', { cx: cx, cy: below + i * 6, r: 1.8, class: 'dot' }));
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // Status line & keypad state
+    // ---------------------------------------------------------------------
+
+    function updateStatus() {
+      var st = document.getElementById('statusText');
+      var line = null;
+      an.lines.forEach(function (l) { if (l.li === cursor.li) line = l; });
+      st.className = '';
+      if (!line || !line.measures.length) {
+        st.textContent = line ? '第 ' + line.musicNo + ' 行（空白）' : '';
+      } else {
+        // the measure holding the selected token, else the first one
+        var mi = 0;
+        line.measures.forEach(function (m, idx) {
+          m.items.forEach(function (it) { if (it.ti === cursor.pos - 1) mi = idx; });
+        });
+        var m = line.measures[mi];
+        st.textContent = '第 ' + line.musicNo + ' 行 · 第 ' + (mi + 1) + ' 小節 · ' + fmtBeats(m.beats) + ' / ' + fmtBeats(m.expected) + ' 拍';
+        if (Math.abs(m.beats - m.expected) < 1e-6) st.className = 'ok';
+        else if (m.beats > m.expected) st.className = 'bad';
+      }
+
+      var btn = document.getElementById('issueBtn');
+      btn.hidden = an.issues.length === 0;
+      btn.textContent = '⚠ ' + an.issues.length;
+    }
+
+    function updateKeypad() {
+      var p = selectedNote();
+      document.querySelectorAll('#keypad [data-mod]').forEach(function (b) {
+        b.classList.toggle('on', !!p && MOD_ACTIVE[b.dataset.mod](p));
+      });
+    }
+
+    var toastTimer = null;
+    function toast(msg) {
+      var el = document.getElementById('toast');
+      el.textContent = msg;
+      el.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { el.hidden = true; }, 1400);
+    }
+
+    function signed(n) { return (n > 0 ? '+' : '') + n; }
+
+    // ---------------------------------------------------------------------
+    // Audio
+    // ---------------------------------------------------------------------
+
+    var audioCtx = null;
+    var activeOscillators = [];
+    var rafHandle = null;
+    var isPlaying = false;
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new Ctx();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function tone(ctx, midi, t0, dur, track) {
+      var osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = midiToFreq(midi);
+      var gain = ctx.createGain();
+      dur = Math.max(dur, 0.05);
+      var attack = 0.015;
+      var release = Math.min(0.08, dur * 0.3);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.linearRampToValueAtTime(0.5, t0 + attack);
+      gain.gain.setValueAtTime(0.5, Math.max(t0 + attack, t0 + dur - release));
+      gain.gain.linearRampToValueAtTime(0.0001, t0 + dur - 0.004);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+      if (track) activeOscillators.push(osc);
+    }
+
+    function preview(p) {
+      if (!previewOn || isPlaying) return;
+      var ctx = ensureAudio();
+      tone(ctx, noteMidi(doc.header, transposeVal, p), ctx.currentTime + 0.01, 0.3, false);
+    }
+
+    function clearHighlight() {
+      document.querySelectorAll('#score .playing').forEach(function (el) { el.classList.remove('playing'); });
+    }
+
+    function stopPlayback() {
+      activeOscillators.forEach(function (o) { try { o.stop(); } catch (e) { /* already stopped */ } });
+      activeOscillators = [];
+      if (rafHandle) { cancelAnimationFrame(rafHandle); rafHandle = null; }
+      clearHighlight();
+      setPlaying(false);
+    }
+
+    function setPlaying(on) {
+      isPlaying = on;
+      document.getElementById('playBtn').textContent = on ? '■' : '▶';
+    }
+
+    function playEvents(events) {
+      stopPlayback();
+      if (!events.length) { toast('還沒有可以播放的音'); return; }
+      var ctx = ensureAudio();
+      var startAt = ctx.currentTime + 0.05;
+      events.forEach(function (ev) { tone(ctx, ev.midi, startAt + ev.startSec, ev.durSec, true); });
+      setPlaying(true);
+      var lastShown = null;
+
+      (function loop() {
+        var now = ctx.currentTime - startAt;
+        var anyFuture = false;
+        events.forEach(function (ev) {
+          var active = now >= ev.startSec && now < ev.startSec + ev.durSec;
+          if (now < ev.startSec + ev.durSec) anyFuture = true;
+          ev.ids.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.toggle('playing', active);
+          });
+          if (active && ev.ids[0] !== lastShown) {
+            lastShown = ev.ids[0];
+            var el0 = document.getElementById(lastShown);
+            if (el0) el0.closest('svg').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
+        });
+        if (anyFuture) rafHandle = requestAnimationFrame(loop);
+        else stopPlayback();
+      })();
+    }
+
+    function currentBpm() { return Number(document.getElementById('tempoSlider').value); }
+
+    function musicLines() {
+      return an.lines.filter(function (l) { return l.type === 'music' && l.measures.length; });
+    }
+
+    function playAll() {
+      if (isPlaying) { stopPlayback(); return; }
+      playEvents(buildEvents(an, musicLines(), transposeVal, currentBpm()));
+    }
+
+    function playIntro() {
+      var lines = musicLines();
+      if (!lines.length) { toast('還沒有可以播放的音'); return; }
+      var qsec = quarterSeconds(an.timeDen, currentBpm());
+      var primerDur = 0.4 * qsec;
+      var shift = primerDur + 0.15;
+      var rowEvents = buildEvents(an, [lines[0]], transposeVal, currentBpm());
+      rowEvents.forEach(function (ev) { ev.startSec += shift; });
+      var primer = { startSec: 0, durSec: primerDur, midi: noteMidi(doc.header, transposeVal, { n: 1, acc: null, oct: 0 }), ids: [] };
+      playEvents([primer].concat(rowEvents));
+    }
+
+    // ---------------------------------------------------------------------
+    // Sheets
+    // ---------------------------------------------------------------------
+
+    function openSheet(id) { document.getElementById(id).hidden = false; }
+    function closeSheet(id) { document.getElementById(id).hidden = true; }
+
+    document.querySelectorAll('.backdrop').forEach(function (bd) {
+      bd.addEventListener('click', function (e) {
+        if (e.target === bd || e.target.hasAttribute('data-close')) bd.hidden = true;
+      });
+    });
+
+    function updateTransposeUi() {
+      document.getElementById('transposeVal').textContent = signed(transposeVal);
+      document.getElementById('actualKey').textContent = '實際 1=' + keyLabel(actualKeyName(doc.header, transposeVal));
+      render(false);
+    }
+
+    function openInfo() {
+      var h = doc.header;
+      document.getElementById('fBook').value = currentBook;
+      document.getElementById('fTitle').value = h.title;
+      document.getElementById('fNumber').value = h.number;
+      document.getElementById('fKey').value = h.key;
+      var timeSel = document.getElementById('fTime');
+      if (!Array.prototype.some.call(timeSel.options, function (o) { return o.value === h.time; })) {
+        timeSel.appendChild(new Option(h.time));
+      }
+      timeSel.value = h.time;
+      document.getElementById('fTempo').value = h.tempo;
+      openSheet('infoSheet');
+    }
+
+    function renderIssues() {
+      var list = document.getElementById('issueList');
+      list.innerHTML = '';
+      an.issues.forEach(function (iss) {
+        var d = document.createElement('div');
+        d.className = 'issue ' + iss.type;
+        d.textContent = iss.msg + '（點一下前往）';
+        d.addEventListener('click', function () {
+          cursor = { li: iss.li, pos: iss.ti + 1 };
+          closeSheet('issueSheet');
+          render(true);
+        });
+        list.appendChild(d);
+      });
+    }
+
+    function exportJson() {
+      var h = doc.header;
+      var measures = [];
+      musicLines().forEach(function (line) {
+        line.measures.forEach(function (m) {
+          var out = [];
+          m.items.forEach(function (it) {
+            if ((it.kind !== 'note' && it.kind !== 'rest') || it.tiedFrom) return;
+            out.push({ n: it.p.n, oct: it.p.oct, acc: it.p.acc, dur: it.playDur, dot: it.p.dot });
+          });
+          measures.push(out);
+        });
+      });
+      var data = {
+        format: 'jianpu-editor',
+        version: 1,
+        book: currentBook,
+        title: h.title,
+        number: h.number,
+        key: h.key,
+        time: h.time,
+        tempo: h.tempo,
+        source: toSource(doc),
+        measures: measures,
+        savedAt: new Date().toISOString()
+      };
+      var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      // numbered songs get the library file name, ready to drop into jianpu/{book}/
+      a.download = parseInt(h.number, 10) ? songKey(currentBook, h.number) + '.json' : (h.title || 'untitled') + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    function replaceAll(src) {
+      edit(function () { loadDoc(src, false); });
+      updateTransposeUi();
+    }
+
+    // ---------------------------------------------------------------------
+    // Wiring
+    // ---------------------------------------------------------------------
+
+    document.getElementById('keypad').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.digit) insertToken(b.dataset.digit);
+      else if (b.dataset.insert) insertToken(b.dataset.insert);
+      else if (b.dataset.mod) applyMod(b.dataset.mod);
+      else if (b.dataset.action === 'backspace') backspace();
+      else if (b.dataset.action === 'newline') newline();
+      else if (b.dataset.action === 'label') insertLabel();
+      else if (b.dataset.action === 'left') moveCursor(-1);
+      else if (b.dataset.action === 'right') moveCursor(1);
+    });
+
+    // Hardware keyboard (tablets with keyboards / desktop testing)
+    document.addEventListener('keydown', function (e) {
+      if (e.target.closest('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
+      var k = e.key;
+      if (/^[0-7]$/.test(k)) insertToken(k);
+      else if (k === '-' || k === '|' || k === '~') insertToken(k);
+      else if (k === 'Backspace') backspace();
+      else if (k === 'Enter') newline();
+      else if (k === 'ArrowLeft') moveCursor(-1);
+      else if (k === 'ArrowRight') moveCursor(1);
+      else if (k === "'") applyMod('octUp');
+      else if (k === ',') applyMod('octDown');
+      else if (k === '#') applyMod('sharp');
+      else if (k === 'b') applyMod('flat');
+      else if (k === '.') applyMod('dot');
+      else if (k === '_') applyMod('eighth');
+      else if (k === '=') applyMod('sixteenth');
+      else if (k === '(') applyMod('slurStart');
+      else if (k === ')') applyMod('slurEnd');
+      else return;
+      e.preventDefault();
+    });
+
+    document.getElementById('homeBtn').addEventListener('click', function () { location.href = './index.html'; });
+    document.getElementById('songTitle').addEventListener('click', openInfo);
+    document.getElementById('undoBtn').addEventListener('click', undo);
+    document.getElementById('playBtn').addEventListener('click', playAll);
+    document.getElementById('introBtn').addEventListener('click', playIntro);
+    document.getElementById('moreBtn').addEventListener('click', function () { openSheet('moreSheet'); });
+    document.getElementById('issueBtn').addEventListener('click', function () { renderIssues(); openSheet('issueSheet'); });
+
+    document.getElementById('transUp').addEventListener('click', function () {
+      transposeVal = Math.min(6, transposeVal + 1);
+      updateTransposeUi();
+    });
+    document.getElementById('transDown').addEventListener('click', function () {
+      transposeVal = Math.max(-6, transposeVal - 1);
+      updateTransposeUi();
+    });
+    document.getElementById('tempoSlider').addEventListener('input', function (e) {
+      document.getElementById('tempoVal').textContent = e.target.value;
+    });
+    document.getElementById('previewToggle').addEventListener('change', function (e) {
+      previewOn = e.target.checked;
+      try { localStorage.setItem(LS_PREVIEW_KEY, previewOn ? '1' : '0'); } catch (err) { /* ignore */ }
+    });
+
+    function openSong(key) {
+      return fetchSong(key).then(function (obj) {
+        setBook(obj.book);
+        replaceAll(obj.source);
+        toast('已開啟 ' + key);
+      }, function () {
+        toast('詩歌庫裡還沒有 ' + key);
+      });
+    }
+
+    document.querySelectorAll('.book-select').forEach(function (sel) {
+      BOOKS.forEach(function (b) { sel.appendChild(new Option(b.name + '(' + b.code + ')', b.code)); });
+    });
+    document.getElementById('libraryMenuBtn').addEventListener('click', function () {
+      closeSheet('moreSheet');
+      document.getElementById('libBook').value = currentBook;
+      openSheet('librarySheet');
+    });
+    document.getElementById('libOpen').addEventListener('click', function () {
+      var n = parseInt(document.getElementById('libNumber').value, 10);
+      if (!n) { toast('請輸入編號'); return; }
+      closeSheet('librarySheet');
+      openSong(songKey(document.getElementById('libBook').value, n));
+    });
+
+    var keySel = document.getElementById('fKey');
+    KEY_NAMES.forEach(function (k) { keySel.appendChild(new Option(keyLabel(k), k)); });
+
+    document.getElementById('infoMenuBtn').addEventListener('click', function () { closeSheet('moreSheet'); openInfo(); });
+    document.getElementById('infoSave').addEventListener('click', function () {
+      setBook(document.getElementById('fBook').value);
+      edit(function () {
+        var h = doc.header;
+        h.title = document.getElementById('fTitle').value.trim();
+        h.number = document.getElementById('fNumber').value.trim();
+        h.key = document.getElementById('fKey').value;
+        h.time = document.getElementById('fTime').value;
+        h.tempo = parseFloat(document.getElementById('fTempo').value) || 72;
+      });
+      document.getElementById('tempoSlider').value = doc.header.tempo;
+      document.getElementById('tempoVal').textContent = doc.header.tempo;
+      closeSheet('infoSheet');
+      updateTransposeUi();
+    });
+
+    document.getElementById('textMenuBtn').addEventListener('click', function () {
+      closeSheet('moreSheet');
+      document.getElementById('textSource').value = toSource(doc);
+      openSheet('textSheet');
+    });
+    document.getElementById('textApply').addEventListener('click', function () {
+      replaceAll(document.getElementById('textSource').value);
+      closeSheet('textSheet');
+    });
+
+    document.getElementById('helpMenuBtn').addEventListener('click', function () { closeSheet('moreSheet'); openSheet('helpSheet'); });
+    document.getElementById('exportBtn').addEventListener('click', exportJson);
+    document.getElementById('importBtn').addEventListener('click', function () { document.getElementById('importFile').click(); });
+    document.getElementById('importFile').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var obj = JSON.parse(reader.result);
+          if (!obj || typeof obj.source !== 'string') { toast('匯入失敗：JSON 缺少 source 欄位'); return; }
+          if (obj.book) setBook(obj.book);
+          replaceAll(obj.source);
+          closeSheet('moreSheet');
+          toast('已匯入');
+        } catch (err) {
+          toast('匯入失敗：JSON 格式錯誤');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    document.getElementById('exampleBtn').addEventListener('click', function () {
+      if (!window.confirm('載入範例會取代目前內容（可以按 ↶ 復原），確定嗎？')) return;
+      closeSheet('moreSheet');
+      openSong(EXAMPLE_SONG);
+    });
+    document.getElementById('newSongBtn').addEventListener('click', function () {
+      if (!window.confirm('清空目前內容開始新歌（可以按 ↶ 復原），確定嗎？')) return;
+      replaceAll(NEW_SONG_SOURCE);
+      closeSheet('moreSheet');
+      openInfo();
+    });
+
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { render(false); }, 150);
+    });
+
+    // ---------------------------------------------------------------------
+    // Init
+    // ---------------------------------------------------------------------
+
+    try { previewOn = localStorage.getItem(LS_PREVIEW_KEY) !== '0'; } catch (e) { /* ignore */ }
+    document.getElementById('previewToggle').checked = previewOn;
+
+    try { setBook(localStorage.getItem(LS_BOOK_KEY) || 'D'); } catch (e) { /* ignore */ }
+
+    // ?song=D_178 (from the song page's ✎ button) opens that song from the library;
+    // otherwise resume the saved draft, or show the example on first visit.
+    var requested = new URLSearchParams(location.search).get('song');
+    var saved = loadLocal();
+    loadDoc(saved || NEW_SONG_SOURCE, false);
+    updateTransposeUi();
+    if (requested && /^[A-Z]_\d+$/.test(requested)) openSong(requested);
+    else if (!saved) openSong(EXAMPLE_SONG);
+  })();
+  </script>
+</body>
+
+</html>

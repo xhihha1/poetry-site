@@ -76,6 +76,17 @@ and in `script/newTestament.js`/`bible.html` — keep them in sync if books are 
 
 - `bible.html` — standalone minimal demo of the Markdown reader (same logic as the Bible-reader
   panel in `index.html`, not integrated with the tab shell).
+- `jianpu-editor.html` (desktop, text-syntax editor) and `jianpu-mobile.html` (phone, tap-to-edit
+  keypad) — standalone 簡譜 editors, spec in `SPEC.md`. Both are self-contained (parsing, SVG
+  rendering, Web Audio playback inline) and share the localStorage key `jianpu-editor:source-v1`
+  and JSON export format, so they edit the same song. Reached from the ☰ menu (`#more-menu`) in
+  `index.html`'s tab bar.
+- `jianpu/{book}/{book}_{NNN}.json` — song library of editor exports, named like the song images
+  (same book codes and padding, e.g. `jianpu/D/D_178.json`). Adding a file is enough: the song
+  page probes for it after `submitInput()` and, if found, shows a play bar (`#song-player`) driven
+  by `script/jianpuPlayer.js`, which plays the JSON's `measures` field (no notation parsing). The
+  mobile editor opens songs from here (`?song=D_178` or its 詩歌庫 sheet); both editors load
+  `D_178.json` as the first-visit example.
 - `backup.html` — appears to be a leftover "add to home screen" demo/reference page, not linked
   from `index.html`.
 

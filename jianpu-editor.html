@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>簡譜編輯器</title>
+  <link rel="icon" type="image/png" href="./icons/images.png">
+
+  <style>
+    :root {
+      --bg: #f6f5f1;
+      --panel: #ffffff;
+      --ink: #222;
+      --muted: #777;
+      --accent: #b5452b;
+      --line: #ccc;
+      --warn: #c97a12;
+      --err: #c0392b;
+      --playing: #2a7f3e;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    header.topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 8px 12px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header.topbar h1 {
+      font-size: 15px;
+      margin: 0;
+      margin-right: 6px;
+      white-space: nowrap;
+      color: var(--accent);
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fcfcfa;
+    }
+
+    button {
+      font-size: 13px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #fff;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    button:hover { background: #f0efe9; }
+    button:active { background: #e6e4dc; }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.primary:hover { background: #9c3a23; }
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    .toolbar-group label {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    input[type="range"] { width: 90px; vertical-align: middle; }
+
+    .small-btn {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      line-height: 24px;
+      text-align: center;
+    }
+
+    #transposeVal, #tempoVal, #actualKey {
+      display: inline-block;
+      min-width: 2.2em;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    main.layout {
+      display: flex;
+      height: calc(100vh - 48px);
+    }
+
+    .pane {
+      flex: 1 1 50%;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pane-title {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 10px 2px;
+      flex: 0 0 auto;
+    }
+
+    #editor {
+      flex: 1 1 auto;
+      width: 100%;
+      resize: none;
+      border: none;
+      outline: none;
+      padding: 10px 12px;
+      font-family: "SF Mono", "Menlo", "Consolas", monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+    }
+
+    #scoreWrap {
+      flex: 1 1 auto;
+      overflow: auto;
+      background: var(--panel);
+      padding: 8px 4px 20px;
+    }
+
+    .section-label {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: bold;
+      margin: 10px 10px 0;
+    }
+
+    .score-header {
+      margin: 4px 10px 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .score-header .title {
+      font-size: 16px;
+      color: var(--ink);
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .row-svg { display: block; }
+
+    .note-digit { font-size: 20px; font-family: Georgia, "Times New Roman", serif; }
+    .note-digit.playing { fill: var(--playing); font-weight: bold; }
+    .note-acc { font-size: 13px; }
+    .note-dash { font-size: 20px; }
+    .note-error { fill: var(--err); cursor: help; }
+    .bar-line { stroke: #555; stroke-width: 1; }
+    .bar-line-final { stroke: #222; }
+    .beam-line { stroke: var(--ink); stroke-width: 2; }
+    .slur-path { stroke: var(--ink); stroke-width: 1; fill: none; }
+    .oct-dot { fill: var(--ink); }
+    .dur-dot { fill: var(--ink); }
+    .measure-warn-bg { fill: #fdf0d5; }
+
+    #panels {
+      flex: 0 0 auto;
+      max-height: 26vh;
+      overflow: auto;
+      border-top: 1px solid var(--line);
+      background: #fffaf5;
+      font-size: 12.5px;
+    }
+
+    #panels .item { padding: 3px 12px; border-bottom: 1px dashed #eee; }
+    #panels .err { color: var(--err); }
+    #panels .warn { color: var(--warn); }
+    #panels:empty { display: none; }
+
+    #dropHint {
+      position: fixed;
+      inset: 0;
+      background: rgba(181, 69, 43, 0.12);
+      border: 3px dashed var(--accent);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--accent);
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    @media (max-width: 760px) {
+      main.layout { flex-direction: column; height: auto; }
+      .pane { flex: none; }
+      #editor { height: 32vh; border-right: none; border-bottom: 1px solid var(--line); }
+      #scoreWrap { height: 44vh; }
+      header.topbar h1 { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <h1>簡譜編輯器</h1>
+
+    <div class="toolbar-group">
+      <button id="playBtn" class="primary">▶ 播放</button>
+      <button id="introBtn">起調</button>
+    </div>
+
+    <div class="toolbar-group">
+      <label>移調</label>
+      <button id="transDown" class="small-btn">−</button>
+      <span id="transposeVal">0</span>
+      <button id="transUp" class="small-btn">＋</button>
+      <span id="actualKeyWrap">（實際 1=<span id="actualKey">C</span>）</span>
+    </div>
+
+    <div class="toolbar-group">
+      <label>速度</label>
+      <input type="range" id="tempoSlider" min="40" max="160" value="72">
+      <span id="tempoVal">72</span>
+    </div>
+
+    <div class="toolbar-group">
+      <button id="exportBtn">匯出 JSON</button>
+      <button id="importBtn">匯入 JSON</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    </div>
+  </header>
+
+  <main class="layout">
+    <div class="pane">
+      <div class="pane-title">文字編輯（語法請見 SPEC.md）</div>
+      <textarea id="editor" spellcheck="false"></textarea>
+    </div>
+    <div class="pane">
+      <div class="pane-title">簡譜</div>
+      <div id="scoreWrap">
+        <div class="score-header" id="scoreHeader"></div>
+        <div id="scoreBody"></div>
+      </div>
+      <div id="panels"></div>
+    </div>
+  </main>
+
+  <div id="dropHint">放開滑鼠以匯入 JSON</div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ---------------------------------------------------------------------
+    // Constants
+    // ---------------------------------------------------------------------
+
+    var LS_KEY = 'jianpu-editor:source-v1';
+
+    var KEY_TO_MIDI = {
+      C: 60, Db: 61, D: 62, Eb: 63, E: 64, F: 65,
+      'F#': 66, Gb: 66, G: 67, Ab: 68, A: 69, Bb: 70, B: 71
+    };
+    var KEY_NAMES_BY_SEMITONE = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+    var DEGREE_SEMITONE = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 };
+    var ACC_SYMBOL = { '#': '♯', b: '♭', n: '♮' };
+
+    var EXAMPLE_URL = './jianpu/D/D_178.json';
+
+    // ---------------------------------------------------------------------
+    // Parsing
+    // ---------------------------------------------------------------------
+
+    // One note/rest/dash/error token -> structured object (no beat timing yet).
+    function parseToken(tok) {
+      if (tok === '-') return { kind: 'dash' };
+      if (tok === '~') return { kind: 'tie' };
+
+      var s = tok;
+      var slurStart = false, slurEnd = false;
+      if (s.charAt(0) === '(') { slurStart = true; s = s.slice(1); }
+      if (s.charAt(s.length - 1) === ')') { slurEnd = true; s = s.slice(0, -1); }
+
+      var m = /^([#bn])?([0-7])([',._=]*)$/.exec(s);
+      if (!m) return { kind: 'error', raw: tok };
+
+      var accCh = m[1] || null;
+      var n = parseInt(m[2], 10);
+      var suffix = m[3];
+
+      var octUp = 0, octDown = 0, dot = false, underCount = 0, sixteen = false;
+      for (var i = 0; i < suffix.length; i++) {
+        var ch = suffix.charAt(i);
+        if (ch === "'") octUp++;
+        else if (ch === ',') octDown++;
+        else if (ch === '.') dot = true;
+        else if (ch === '_') underCount++;
+        else if (ch === '=') sixteen = true;
+      }
+
+      var base = (sixteen || underCount >= 2) ? 0.25 : (underCount === 1 ? 0.5 : 1);
+      var dur = dot ? base * 1.5 : base;
+      var isRest = n === 0;
+
+      return {
+        kind: isRest ? 'rest' : 'note',
+        n: n,
+        acc: isRest ? null : accCh,
+        oct: isRest ? 0 : (octUp - octDown),
+        dur: dur,
+        dot: dot,
+        slurStart: slurStart,
+        slurEnd: slurEnd,
+        raw: tok
+      };
+    }
+
+    // Split one music-line's text (without the header) into measure segments.
+    function splitMeasures(lineBody) {
+      var body = lineBody.trim();
+      var finalBar = false;
+      if (body.slice(-2) === '||') { finalBar = true; body = body.slice(0, -2).trim(); }
+      else if (body.slice(-1) === '|') { body = body.slice(0, -1).trim(); }
+      var segs = body.split('|').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+      return { segs: segs, finalBar: finalBar };
+    }
+
+    // Build one measure's note list from a raw token segment, carrying tie/dash
+    // state that belongs to the whole row (dashes & ties may refer back to the
+    // previous measure's last sounding note).
+    function buildMeasure(seg, lineNo, state, errors) {
+      var rawTokens = seg.split(/\s+/).filter(Boolean);
+      var notes = [];
+
+      rawTokens.forEach(function (tok) {
+        var parsed = parseToken(tok);
+
+        if (parsed.kind === 'dash') {
+          if (state.lastReal) {
+            state.lastReal.dur += 1;
+            notes.push({ kind: 'dash', raw: tok });
+          } else {
+            errors.push({ lineNo: lineNo, message: '"-" 沒有前一個音可以延長', raw: tok });
+            notes.push({ kind: 'error', raw: tok, dur: 1 });
+          }
+          return;
+        }
+
+        if (parsed.kind === 'tie') {
+          state.pendingTie = true;
+          return;
+        }
+
+        if (parsed.kind === 'error') {
+          errors.push({ lineNo: lineNo, message: '無法解析的記號 "' + parsed.raw + '"', raw: parsed.raw });
+          notes.push({ kind: 'error', raw: parsed.raw, dur: 1 });
+          state.pendingTie = false;
+          return;
+        }
+
+        // real note or rest
+        if (state.pendingTie && state.lastReal && parsed.kind === 'note' &&
+            state.lastReal.kind === 'note' && state.lastReal.n === parsed.n &&
+            state.lastReal.acc === parsed.acc && state.lastReal.oct === parsed.oct) {
+          // merge into the previous sounding note, keep a render-only duplicate
+          state.lastReal.dur += parsed.dur;
+          notes.push({ kind: parsed.kind, n: parsed.n, acc: parsed.acc, oct: parsed.oct,
+            dur: parsed.dur, dot: parsed.dot, raw: parsed.raw, renderOnly: true,
+            slurStart: parsed.slurStart, slurEnd: parsed.slurEnd });
+        } else {
+          notes.push(parsed);
+          if (parsed.kind === 'note' || parsed.kind === 'rest') state.lastReal = parsed;
+        }
+        state.pendingTie = false;
+      });
+
+      return notes;
+    }
+
+    // Walk a measure's notes assigning cumulative beat-start positions (used for
+    // playback timing and for grouping eighth/sixteenth notes under one beam).
+    // Dash and render-only tie-duplicates are skipped (their time already lives
+    // inside the note they extend); error tokens count as 1 beat so the rest of
+    // the measure still lines up visually.
+    function annotateMeasure(notes, timeNum, timeDen) {
+      var cum = 0;
+      notes.forEach(function (nt) {
+        if (nt.kind === 'dash' || nt.renderOnly) return;
+        nt._start = cum;
+        cum += (nt.kind === 'error') ? 1 : nt.dur;
+      });
+
+      var expected = timeNum * (4 / timeDen);
+      var mismatch = Math.abs(cum - expected) > 1e-6;
+
+      // beam groups: consecutive notes/rests with dur < 1 inside the same beat
+      var beamGroups = [];
+      var i = 0;
+      while (i < notes.length) {
+        var nt = notes[i];
+        var playable = (nt.kind === 'note' || nt.kind === 'rest') && !nt.renderOnly;
+        if (playable && nt.dur < 1 - 1e-9) {
+          var beatIdx = Math.floor(nt._start + 1e-9);
+          var group = [nt];
+          var j = i;
+          while (j + 1 < notes.length) {
+            var nxt = notes[j + 1];
+            var nxtPlayable = (nxt.kind === 'note' || nxt.kind === 'rest') && !nxt.renderOnly;
+            if (nxtPlayable && nxt.dur < 1 - 1e-9 && Math.floor(nxt._start + 1e-9) === beatIdx) {
+              group.push(nxt); j++;
+            } else break;
+          }
+          if (group.length > 1) beamGroups.push(group);
+          i = j + 1;
+          continue;
+        }
+        i++;
+      }
+
+      return { actualBeats: cum, expectedBeats: expected, beatMismatch: mismatch, beamGroups: beamGroups };
+    }
+
+    function parseHeader(lines) {
+      var header = { title: '', number: '', key: 'C', time: '4/4', tempo: 72 };
+      var i = 0;
+      var re = /^(title|number|key|time|tempo)\s*:\s*(.*)$/i;
+      for (; i < lines.length; i++) {
+        var m = re.exec(lines[i].trim());
+        if (!m) break;
+        var field = m[1].toLowerCase();
+        var val = m[2].trim();
+        if (field === 'tempo') header.tempo = parseFloat(val) || 72;
+        else header[field] = val;
+      }
+      var tp = header.time.split('/');
+      header.timeNum = parseInt(tp[0], 10) || 4;
+      header.timeDen = parseInt(tp[1], 10) || 4;
+      if (!(header.key in KEY_TO_MIDI)) header.key = 'C';
+      return { header: header, bodyStart: i };
+    }
+
+    function parseSource(text) {
+      var lines = text.replace(/\r\n/g, '\n').split('\n');
+      var parsedHeader = parseHeader(lines);
+      var header = parsedHeader.header;
+      var errors = [];
+      var warnings = [];
+      var rows = [];
+      var state = { lastReal: null, pendingTie: false };
+
+      for (var li = parsedHeader.bodyStart; li < lines.length; li++) {
+        var raw = lines[li];
+        var lineNo = li + 1;
+        var trimmed = raw.trim();
+        if (trimmed === '') continue;
+
+        if (trimmed.charAt(0) === '#' && !/[0-9]/.test(trimmed.charAt(1) || '')) {
+          rows.push({ type: 'label', text: trimmed.replace(/^#\s*/, ''), lineNo: lineNo });
+          state.lastReal = null; // a label starts a fresh musical phrase
+          state.pendingTie = false;
+          continue;
+        }
+
+        var split = splitMeasures(trimmed);
+        var measures = split.segs.map(function (seg, idx) {
+          var notes = buildMeasure(seg, lineNo, state, errors);
+          var ann = annotateMeasure(notes, header.timeNum, header.timeDen);
+          var isLastSeg = idx === split.segs.length - 1;
+          var measure = {
+            notes: notes,
+            lineNo: lineNo,
+            finalBar: isLastSeg && split.finalBar,
+            actualBeats: ann.actualBeats,
+            expectedBeats: ann.expectedBeats,
+            beatMismatch: ann.beatMismatch,
+            beamGroups: ann.beamGroups
+          };
+          if (ann.beatMismatch) {
+            warnings.push({
+              lineNo: lineNo,
+              message: '第 ' + (idx + 1) + ' 小節拍數為 ' + ann.actualBeats + '，預期 ' + ann.expectedBeats + ' 拍',
+              raw: seg
+            });
+          }
+          return measure;
+        });
+
+        rows.push({ type: 'music', measures: measures, lineNo: lineNo });
+      }
+
+      return { header: header, rows: rows, errors: errors, warnings: warnings };
+    }
+
+    // ---------------------------------------------------------------------
+    // Pitch / timing helpers
+    // ---------------------------------------------------------------------
+
+    function noteMidi(header, transpose, n, acc, oct) {
+      var root = KEY_TO_MIDI[header.key] != null ? KEY_TO_MIDI[header.key] : 60;
+      var accOffset = acc === '#' ? 1 : acc === 'b' ? -1 : 0;
+      return root + (DEGREE_SEMITONE[n] || 0) + accOffset + 12 * oct + transpose;
+    }
+
+    function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+    function actualKeyName(header, transpose) {
+      var root = KEY_TO_MIDI[header.key] != null ? KEY_TO_MIDI[header.key] : 60;
+      var semitone = ((root + transpose - 60) % 12 + 12) % 12;
+      return KEY_NAMES_BY_SEMITONE[semitone];
+    }
+
+    function quarterSeconds(header, tempoOverride) {
+      var bpm = tempoOverride || header.tempo || 72;
+      var den = header.timeDen || 4;
+      return (60 / bpm) * (den / 4);
+    }
+
+    // Build a flat, time-ordered list of sounding events (rests become gaps)
+    // from a subset of parsed "music" rows, each annotated with the display
+    // element ids that should be highlighted while it plays.
+    function buildEvents(header, transpose, tempoOverride, musicRows) {
+      var qsec = quarterSeconds(header, tempoOverride);
+      var events = [];
+      var t = 0;
+      musicRows.forEach(function (row) {
+        row.measures.forEach(function (measure) {
+          measure.notes.forEach(function (nt) {
+            if (nt.kind === 'dash' || nt.renderOnly || nt.kind === 'error') return;
+            var durSec = nt.dur * qsec;
+            if (nt.kind === 'note') {
+              events.push({
+                startSec: t + nt._start * qsec,
+                durSec: durSec,
+                midi: noteMidi(header, transpose, nt.n, nt.acc, nt.oct),
+                ids: nt._displayIds || []
+              });
+            }
+          });
+          t += measure.actualBeats * qsec;
+        });
+      });
+      return events;
+    }
+
+    // ---------------------------------------------------------------------
+    // Self-test hook (used by scripts/test-jianpu-parser.mjs via extraction)
+    // ---------------------------------------------------------------------
+
+    window.__jianpuTestHooks = {
+      parseSource: parseSource,
+      noteMidi: noteMidi,
+      actualKeyName: actualKeyName,
+      quarterSeconds: quarterSeconds,
+      buildEvents: buildEvents
+    };
+
+    // ---------------------------------------------------------------------
+    // Rendering
+    // ---------------------------------------------------------------------
+
+    var COL_W = 32, BAR_W = 16, PAD_L = 14, PAD_R = 10, ROW_H = 96, BASE_Y = 52;
+
+    function svgEl(tag, attrs) {
+      var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+
+    var displayIdCounter = 0;
+
+    function renderScore(parsed, transpose) {
+      var headerEl = document.getElementById('scoreHeader');
+      var bodyEl = document.getElementById('scoreBody');
+      bodyEl.innerHTML = '';
+      displayIdCounter = 0;
+
+      var h = parsed.header;
+      var keyLabel = h.key.replace('#', '♯').replace('b', '♭');
+      // only replace a trailing 'b' used as flat marker, not note letters
+      keyLabel = h.key.length === 2 && h.key.charAt(1) === 'b' ? h.key.charAt(0) + '♭' : h.key.replace('#', '♯');
+      headerEl.innerHTML =
+        '<span class="title">' + escapeHtml(h.number ? h.number + ' ' + h.title : h.title) + '</span>' +
+        '1=' + escapeHtml(keyLabel) + '　' + escapeHtml(h.time) + '　♩=' + escapeHtml(String(h.tempo));
+
+      parsed.rows.forEach(function (row) {
+        if (row.type === 'label') {
+          var lbl = document.createElement('div');
+          lbl.className = 'section-label';
+          lbl.textContent = row.text;
+          bodyEl.appendChild(lbl);
+          return;
+        }
+        bodyEl.appendChild(renderRow(row));
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function renderRow(row) {
+      // layout pass: assign x to every rendered item (note/rest/dash/error)
+      var x = PAD_L;
+      var items = []; // {nt, x, measure}
+      var barlines = [];
+      row.measures.forEach(function (measure) {
+        measure.notes.forEach(function (nt) {
+          items.push({ nt: nt, x: x, measure: measure });
+          x += COL_W;
+        });
+        barlines.push({ x: x, final: measure.finalBar, warn: measure.beatMismatch });
+        x += BAR_W;
+      });
+      var width = x + PAD_R;
+
+      var svg = svgEl('svg', { class: 'row-svg', width: String(width), height: String(ROW_H), viewBox: '0 0 ' + width + ' ' + ROW_H });
+
+      // measure warning backgrounds
+      var mx = PAD_L;
+      row.measures.forEach(function (measure) {
+        var mw = measure.notes.length * COL_W;
+        if (measure.beatMismatch) {
+          svg.appendChild(svgEl('rect', { x: mx, y: 4, width: mw, height: ROW_H - 8, class: 'measure-warn-bg' }));
+        }
+        mx += mw + BAR_W;
+      });
+
+      // beam groups (underlines) -- drawn before notes so text sits on top
+      row.measures.forEach(function (measure) {
+        measure.beamGroups.forEach(function (group) {
+          var first = group[0], last = group[group.length - 1];
+          var xi = itemX(items, first), xj = itemX(items, last);
+          if (xi == null || xj == null) return;
+          svg.appendChild(svgEl('line', {
+            x1: xi + COL_W / 2, x2: xj + COL_W / 2, y1: BASE_Y + 14, y2: BASE_Y + 14, class: 'beam-line'
+          }));
+          group.forEach(function (nt) {
+            if (nt.dur <= 0.25 + 1e-9) {
+              var xn = itemX(items, nt);
+              if (xn != null) {
+                svg.appendChild(svgEl('line', {
+                  x1: xn + COL_W / 2 - 10, x2: xn + COL_W / 2 + 10, y1: BASE_Y + 19, y2: BASE_Y + 19, class: 'beam-line'
+                }));
+              }
+            }
+          });
+        });
+        // lone short notes (not part of a shared group) still get their own underline
+        measure.notes.forEach(function (nt) {
+          var playable = (nt.kind === 'note' || nt.kind === 'rest') && !nt.renderOnly;
+          if (!playable || nt.dur >= 1 - 1e-9) return;
+          var inGroup = measure.beamGroups.some(function (g) { return g.indexOf(nt) !== -1; });
+          if (inGroup) return;
+          var xn = itemX(items, nt);
+          if (xn == null) return;
+          svg.appendChild(svgEl('line', { x1: xn + COL_W / 2 - 10, x2: xn + COL_W / 2 + 10, y1: BASE_Y + 14, y2: BASE_Y + 14, class: 'beam-line' }));
+          if (nt.dur <= 0.25 + 1e-9) {
+            svg.appendChild(svgEl('line', { x1: xn + COL_W / 2 - 10, x2: xn + COL_W / 2 + 10, y1: BASE_Y + 19, y2: BASE_Y + 19, class: 'beam-line' }));
+          }
+        });
+      });
+
+      // slurs: find slurStart/slurEnd pairs in row order
+      var openSlur = null;
+      items.forEach(function (it) {
+        var nt = it.nt;
+        if (nt.kind !== 'note' && nt.kind !== 'rest') return;
+        if (nt.slurStart) openSlur = it;
+        if (nt.slurEnd && openSlur) {
+          var cx1 = openSlur.x + COL_W / 2, cx2 = it.x + COL_W / 2;
+          var midx = (cx1 + cx2) / 2;
+          var topY = BASE_Y - 30;
+          svg.appendChild(svgEl('path', {
+            d: 'M ' + cx1 + ' ' + (BASE_Y - 18) + ' Q ' + midx + ' ' + topY + ' ' + cx2 + ' ' + (BASE_Y - 18),
+            class: 'slur-path'
+          }));
+          openSlur = null;
+        }
+      });
+
+      // notes
+      items.forEach(function (it) {
+        drawItem(svg, it.nt, it.x);
+      });
+
+      // barlines
+      barlines.forEach(function (b) {
+        if (b.final) {
+          svg.appendChild(svgEl('line', { x1: b.x, x2: b.x, y1: 6, y2: ROW_H - 6, class: 'bar-line' }));
+          svg.appendChild(svgEl('line', { x1: b.x + 4, x2: b.x + 4, y1: 6, y2: ROW_H - 6, class: 'bar-line bar-line-final', 'stroke-width': '2.5' }));
+        } else {
+          svg.appendChild(svgEl('line', { x1: b.x, x2: b.x, y1: 10, y2: ROW_H - 10, class: 'bar-line' }));
+        }
+      });
+
+      return svg;
+    }
+
+    function itemX(items, nt) {
+      for (var i = 0; i < items.length; i++) if (items[i].nt === nt) return items[i].x;
+      return null;
+    }
+
+    function drawItem(svg, nt, x) {
+      var cx = x + COL_W / 2;
+
+      if (nt.kind === 'dash') {
+        var t = svgEl('text', { x: cx, y: BASE_Y, 'text-anchor': 'middle', class: 'note-dash' });
+        t.textContent = '-';
+        svg.appendChild(t);
+        return;
+      }
+      if (nt.kind === 'error') {
+        var te = svgEl('text', { x: cx, y: BASE_Y, 'text-anchor': 'middle', class: 'note-error' });
+        te.textContent = nt.raw;
+        var title = svgEl('title', {});
+        title.textContent = '語法錯誤: ' + nt.raw;
+        te.appendChild(title);
+        svg.appendChild(te);
+        return;
+      }
+
+      var id = 'jp-note-' + (displayIdCounter++);
+      nt._displayIds = (nt._displayIds || []);
+      nt._displayIds.push(id);
+
+      var digit = svgEl('text', { x: cx, y: BASE_Y, 'text-anchor': 'middle', class: 'note-digit', id: id });
+      digit.textContent = nt.kind === 'rest' ? '0' : String(nt.n);
+      svg.appendChild(digit);
+
+      if (nt.acc) {
+        var acc = svgEl('text', { x: cx - 11, y: BASE_Y - 13, 'text-anchor': 'middle', class: 'note-acc' });
+        acc.textContent = ACC_SYMBOL[nt.acc];
+        svg.appendChild(acc);
+      }
+
+      if (nt.dot) {
+        svg.appendChild(svgEl('circle', { cx: cx + 10, cy: BASE_Y - 4, r: 2, class: 'dur-dot' }));
+      }
+
+      var hasBeam = nt.dur < 1 - 1e-9;
+      var i;
+      for (i = 0; i < (nt.oct > 0 ? nt.oct : 0); i++) {
+        svg.appendChild(svgEl('circle', { cx: cx, cy: BASE_Y - 18 - i * 7, r: 1.8, class: 'oct-dot' }));
+      }
+      for (i = 0; i < (nt.oct < 0 ? -nt.oct : 0); i++) {
+        var belowBase = hasBeam ? BASE_Y + 24 : BASE_Y + 14;
+        svg.appendChild(svgEl('circle', { cx: cx, cy: belowBase + i * 7, r: 1.8, class: 'oct-dot' }));
+      }
+
+      // associate dash/tie-duplicate render-only glyphs that follow this note's
+      // place in the row with the same ids so playback highlighting covers them
+    }
+
+    // ---------------------------------------------------------------------
+    // Also attach display ids to dash & render-only tie glyphs: they were
+    // drawn without an id above; link them to the preceding sounding note so
+    // highlight-while-playing covers the whole sustained span.
+    // ---------------------------------------------------------------------
+
+    function linkDisplayIds(parsed) {
+      parsed.rows.forEach(function (row) {
+        if (row.type !== 'music') return;
+        row.measures.forEach(function (measure) {
+          var current = null;
+          measure.notes.forEach(function (nt) {
+            if (nt.kind === 'note' || nt.kind === 'rest') {
+              if (!nt.renderOnly) current = nt;
+            } else if (nt.kind === 'dash' && current) {
+              nt._displayIds = current._displayIds;
+            }
+          });
+        });
+      });
+    }
+
+    // ---------------------------------------------------------------------
+    // Errors / warnings panel
+    // ---------------------------------------------------------------------
+
+    function renderPanels(parsed) {
+      var panel = document.getElementById('panels');
+      panel.innerHTML = '';
+      parsed.errors.forEach(function (e) {
+        var d = document.createElement('div');
+        d.className = 'item err';
+        d.textContent = '第 ' + e.lineNo + ' 行錯誤：' + e.message;
+        panel.appendChild(d);
+      });
+      parsed.warnings.forEach(function (w) {
+        var d = document.createElement('div');
+        d.className = 'item warn';
+        d.textContent = '第 ' + w.lineNo + ' 行警告：' + w.message + '（內容：' + w.raw + '）';
+        panel.appendChild(d);
+      });
+    }
+
+    // ---------------------------------------------------------------------
+    // Audio playback
+    // ---------------------------------------------------------------------
+
+    var audioCtx = null;
+    var activeOscillators = [];
+    var rafHandle = null;
+    var playStartCtxTime = 0;
+    var activeEvents = [];
+    var isPlaying = false;
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new Ctx();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function stopPlayback() {
+      activeOscillators.forEach(function (o) { try { o.stop(); } catch (e) {} });
+      activeOscillators = [];
+      if (rafHandle) { cancelAnimationFrame(rafHandle); rafHandle = null; }
+      document.querySelectorAll('.note-digit.playing').forEach(function (el) { el.classList.remove('playing'); });
+      isPlaying = false;
+      updatePlayButton();
+    }
+
+    function scheduleEvents(ctx, events, startAt) {
+      events.forEach(function (ev) {
+        if (ev.midi == null) return;
+        var osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = midiToFreq(ev.midi);
+        var gain = ctx.createGain();
+        var t0 = startAt + ev.startSec;
+        var dur = Math.max(ev.durSec, 0.05);
+        var attack = 0.015;
+        var release = Math.min(0.08, dur * 0.3);
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.linearRampToValueAtTime(0.5, t0 + attack);
+        gain.gain.setValueAtTime(0.5, Math.max(t0 + attack, t0 + dur - release));
+        gain.gain.linearRampToValueAtTime(0.0001, t0 + dur - 0.004);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+        activeOscillators.push(osc);
+      });
+    }
+
+    function highlightLoop(ctx, events, startAt) {
+      var now = ctx.currentTime - startAt;
+      var anyActive = false;
+      var anyFuture = false;
+      events.forEach(function (ev) {
+        var active = now >= ev.startSec && now < ev.startSec + ev.durSec;
+        if (now < ev.startSec + ev.durSec) anyFuture = true;
+        if (active) anyActive = true;
+        (ev.ids || []).forEach(function (id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          el.classList.toggle('playing', active);
+        });
+      });
+      if (anyFuture) {
+        rafHandle = requestAnimationFrame(function () { highlightLoop(ctx, events, startAt); });
+      } else {
+        document.querySelectorAll('.note-digit.playing').forEach(function (el) { el.classList.remove('playing'); });
+        isPlaying = false;
+        updatePlayButton();
+      }
+    }
+
+    function playEvents(events) {
+      stopPlayback();
+      if (!events.length) return;
+      var ctx = ensureAudio();
+      var startAt = ctx.currentTime + 0.05;
+      scheduleEvents(ctx, events, startAt);
+      isPlaying = true;
+      updatePlayButton();
+      highlightLoop(ctx, events, startAt);
+    }
+
+    function updatePlayButton() {
+      var btn = document.getElementById('playBtn');
+      btn.textContent = isPlaying ? '■ 停止' : '▶ 播放';
+    }
+
+    // ---------------------------------------------------------------------
+    // Wiring
+    // ---------------------------------------------------------------------
+
+    var editor = document.getElementById('editor');
+    var transposeVal = 0;
+    var tempoOverride = null;
+    var current = null; // last parse result
+
+    function saveLocal(text) {
+      try { localStorage.setItem(LS_KEY, text); } catch (e) { /* ignore */ }
+    }
+    function loadLocal() {
+      try { return localStorage.getItem(LS_KEY); } catch (e) { return null; }
+    }
+
+    function reparse() {
+      current = parseSource(editor.value);
+      linkDisplayIds(current);
+      renderScore(current, transposeVal);
+      renderPanels(current);
+      document.getElementById('tempoSlider').value = current.header.tempo;
+      document.getElementById('tempoVal').textContent = current.header.tempo;
+      updateActualKey();
+    }
+
+    function updateActualKey() {
+      if (!current) return;
+      document.getElementById('transposeVal').textContent = (transposeVal > 0 ? '+' : '') + transposeVal;
+      document.getElementById('actualKey').textContent = actualKeyName(current.header, transposeVal);
+    }
+
+    function debounce(fn, ms) {
+      var t = null;
+      return function () {
+        var args = arguments;
+        clearTimeout(t);
+        t = setTimeout(function () { fn.apply(null, args); }, ms);
+      };
+    }
+
+    editor.addEventListener('input', debounce(function () {
+      saveLocal(editor.value);
+      reparse();
+    }, 250));
+
+    document.getElementById('playBtn').addEventListener('click', function () {
+      if (isPlaying) { stopPlayback(); return; }
+      var musicRows = current.rows.filter(function (r) { return r.type === 'music'; });
+      var events = buildEvents(current.header, transposeVal, Number(document.getElementById('tempoSlider').value), musicRows);
+      playEvents(events);
+    });
+
+    document.getElementById('introBtn').addEventListener('click', function () {
+      stopPlayback();
+      var musicRows = current.rows.filter(function (r) { return r.type === 'music'; });
+      if (!musicRows.length) return;
+      var firstRow = [musicRows[0]];
+      var qsec = quarterSeconds(current.header, Number(document.getElementById('tempoSlider').value));
+      var primerDur = 0.4 * qsec;
+      var gap = 0.15;
+      var rowEvents = buildEvents(current.header, transposeVal, Number(document.getElementById('tempoSlider').value), firstRow);
+      var shift = primerDur + gap;
+      rowEvents.forEach(function (ev) { ev.startSec += shift; });
+      var primer = { startSec: 0, durSec: primerDur, midi: noteMidi(current.header, transposeVal, 1, null, 0), ids: [] };
+      playEvents([primer].concat(rowEvents));
+    });
+
+    document.getElementById('transUp').addEventListener('click', function () {
+      transposeVal = Math.min(6, transposeVal + 1);
+      updateActualKey();
+    });
+    document.getElementById('transDown').addEventListener('click', function () {
+      transposeVal = Math.max(-6, transposeVal - 1);
+      updateActualKey();
+    });
+
+    document.getElementById('tempoSlider').addEventListener('input', function (e) {
+      document.getElementById('tempoVal').textContent = e.target.value;
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', function () {
+      var h = current.header;
+      var measures = [];
+      current.rows.forEach(function (row) {
+        if (row.type !== 'music') return;
+        row.measures.forEach(function (measure) {
+          var m = [];
+          measure.notes.forEach(function (nt) {
+            if (nt.kind !== 'note' && nt.kind !== 'rest') return;
+            if (nt.renderOnly) return;
+            m.push({
+              n: nt.kind === 'rest' ? 0 : nt.n,
+              oct: nt.oct || 0,
+              acc: nt.acc || null,
+              dur: nt.dur,
+              dot: !!nt.dot
+            });
+          });
+          measures.push(m);
+        });
+      });
+
+      var out = {
+        format: 'jianpu-editor',
+        version: 1,
+        title: h.title,
+        number: h.number,
+        key: h.key,
+        time: h.time,
+        tempo: h.tempo,
+        source: editor.value,
+        measures: measures,
+        savedAt: new Date().toISOString()
+      };
+
+      var blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      var fname = (h.number ? h.number + '-' : '') + (h.title || 'untitled') + '.json';
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+
+    function importFromObject(obj) {
+      if (!obj || typeof obj.source !== 'string') {
+        alert('匯入失敗：JSON 內容缺少 source 欄位');
+        return;
+      }
+      editor.value = obj.source;
+      saveLocal(editor.value);
+      reparse();
+    }
+
+    document.getElementById('importBtn').addEventListener('click', function () {
+      document.getElementById('importFile').click();
+    });
+    document.getElementById('importFile').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try { importFromObject(JSON.parse(reader.result)); }
+        catch (err) { alert('匯入失敗：JSON 格式錯誤'); }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    var dropHint = document.getElementById('dropHint');
+    var dragDepth = 0;
+    window.addEventListener('dragenter', function (e) { e.preventDefault(); dragDepth++; dropHint.style.display = 'flex'; });
+    window.addEventListener('dragover', function (e) { e.preventDefault(); });
+    window.addEventListener('dragleave', function (e) {
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) dropHint.style.display = 'none';
+    });
+    window.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dragDepth = 0;
+      dropHint.style.display = 'none';
+      var file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try { importFromObject(JSON.parse(reader.result)); }
+        catch (err) { alert('匯入失敗：JSON 格式錯誤'); }
+      };
+      reader.readAsText(file);
+    });
+
+    // ---------------------------------------------------------------------
+    // Init
+    // ---------------------------------------------------------------------
+
+    editor.value = loadLocal() || '';
+    reparse();
+    if (!editor.value) {
+      // first visit: show the 178 example from the song library
+      fetch(EXAMPLE_URL)
+        .then(function (res) { return res.json(); })
+        .then(function (obj) { if (!editor.value) importFromObject(obj); })
+        .catch(function () { /* stay empty */ });
+    }
+  })();
+  </script>
+</body>
+
+</html>

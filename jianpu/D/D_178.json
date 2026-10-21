@@ -1,0 +1,685 @@
+{
+  "format": "jianpu-editor",
+  "version": 1,
+  "book": "D",
+  "title": "讚美主－對祂的記念",
+  "number": "178",
+  "key": "Eb",
+  "time": "4/4",
+  "tempo": 72,
+  "source": "title: 讚美主－對祂的記念\nnumber: 178\nkey: Eb\ntime: 4/4\ntempo: 72\n\n# 主歌（四段共用同一旋律）\n5. #4_ 6 5 | 5. 3_ 5 4 | 3. 2_ 4. 3_ | 3. 2_ 1 - |\n5. #4_ 6 5 | 5. 3_ 5 4 | 3. 2_ 4_ 2_ 6,_ 7,_ | 1 - - - |\n2. 3_ (4_ 3_) 2 | 3. 6_ 5 3 | 2. 3_ (4_ 3_) 2 | 3. 6_ 5 - |\n5. 3_ 1'. 7_ | (6_ 7 6_) 5 3 | 1. 2_ (3_ 5) 4_ | 3. 2_ 1 - |\n\n# 副歌\n5. #4_ 6 5 | 3 - 2 - | 4. 3_ 4 6 | 5 - 3 - |\n5. #4_ 5 1' | 7 6 5 4 | 3. 5_ 4 2 | 1 - - - ||",
+  "measures": [
+    [
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": "#",
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 1,
+        "oct": 0,
+        "acc": null,
+        "dur": 2,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": "#",
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 6,
+        "oct": -1,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 7,
+        "oct": -1,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 1,
+        "oct": 0,
+        "acc": null,
+        "dur": 4,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 2,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 1,
+        "oct": 1,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 7,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 7,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 1,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 1,
+        "oct": 0,
+        "acc": null,
+        "dur": 2,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": "#",
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 2,
+        "dot": false
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 2,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 2,
+        "dot": false
+      },
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 2,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": "#",
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 1,
+        "oct": 1,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 7,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 6,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 3,
+        "oct": 0,
+        "acc": null,
+        "dur": 1.5,
+        "dot": true
+      },
+      {
+        "n": 5,
+        "oct": 0,
+        "acc": null,
+        "dur": 0.5,
+        "dot": false
+      },
+      {
+        "n": 4,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      },
+      {
+        "n": 2,
+        "oct": 0,
+        "acc": null,
+        "dur": 1,
+        "dot": false
+      }
+    ],
+    [
+      {
+        "n": 1,
+        "oct": 0,
+        "acc": null,
+        "dur": 4,
+        "dot": false
+      }
+    ]
+  ],
+  "savedAt": "2026-10-21T00:00:00.000Z"
+}
