@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7f5539">
+  <title>更多 APP</title>
+  <link rel="icon" type="image/png" href="../icons/images.png">
+  <link href="./apps.css" rel="stylesheet">
+
+  <style>
+    .app-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 18px 10px;
+      border: 2px solid var(--brown);
+      border-radius: 14px;
+      background: var(--panel);
+      color: var(--brown);
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .app-item:active { background: var(--soft); }
+
+    .app-icon { font-size: 44px; line-height: 1; }
+    .app-name { font-size: 18px; font-weight: 700; }
+    .app-desc { font-size: 13px; text-align: center; color: var(--ink); opacity: 0.75; }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <a href="../index.html" aria-label="回詩歌">‹ 詩歌</a>
+    <h1>更多 APP</h1>
+  </div>
+
+  <div class="main">
+    <!-- Add a new tool: put its page in apps/ and add one <a class="app-item"> here. -->
+    <div class="app-list">
+      <a class="app-item" href="./piano.html">
+        <span class="app-icon">🎹</span>
+        <span class="app-name">鋼琴</span>
+        <span class="app-desc">可多指同時彈，顯示簡譜音名</span>
+      </a>
+      <a class="app-item" href="./drum.html">
+        <span class="app-icon">🥁</span>
+        <span class="app-name">鼓</span>
+        <span class="app-desc">打擊墊 + 16 格節奏機</span>
+      </a>
+      <a class="app-item" href="../jianpu-mobile.html">
+        <span class="app-icon">🎵</span>
+        <span class="app-name">簡譜編輯</span>
+        <span class="app-desc">手機版簡譜編輯器</span>
+      </a>
+      <a class="app-item" href="../jianpu-editor.html">
+        <span class="app-icon">🖥️</span>
+        <span class="app-name">簡譜編輯器</span>
+        <span class="app-desc">桌機版，文字語法輸入</span>
+      </a>
+      <a class="app-item" href="../bible.html">
+        <span class="app-icon">📖</span>
+        <span class="app-name">聖經朗讀</span>
+        <span class="app-desc">簡易版朗讀</span>
+      </a>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -87,6 +87,10 @@ and in `script/newTestament.js`/`bible.html` — keep them in sync if books are 
   by `script/jianpuPlayer.js`, which plays the JSON's `measures` field (no notation parsing). The
   mobile editor opens songs from here (`?song=D_178` or its 詩歌庫 sheet); both editors load
   `D_178.json` as the first-visit example.
+- `apps/` — small standalone tool apps, reached from the ☰ menu's「更多 APP」entry
+  (`apps/index.html`, a card list). `piano.html` and `drum.html` are self-contained (Web Audio
+  synthesis inline, no libraries) and share `apps/apps.css` for the top bar. Adding a tool means
+  a new page in `apps/` plus one `<a class="app-item">` card in `apps/index.html`.
 - `backup.html` — appears to be a leftover "add to home screen" demo/reference page, not linked
   from `index.html`.
 

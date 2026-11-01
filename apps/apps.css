@@ -1,0 +1,81 @@
+/* Shared shell for the small tool apps under apps/ */
+:root {
+  --bg: #9c6644;
+  --panel: #ede0d4;
+  --soft: #ddb892;
+  --brown: #7f5539;
+  --ink: #3b2a1e;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  padding-top: calc(6px + env(safe-area-inset-top, 0px));
+  background: var(--brown);
+  color: var(--panel);
+}
+
+.topbar h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar a,
+.topbar button {
+  flex: 0 0 auto;
+  height: 38px;
+  min-width: 38px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 16px;
+  line-height: 38px;
+  text-decoration: none;
+  text-align: center;
+}
+
+.topbar a:active,
+.topbar button:active { background: rgba(255, 255, 255, 0.3); }
+
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

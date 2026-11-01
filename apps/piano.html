@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#7f5539">
+  <title>鋼琴</title>
+  <link rel="icon" type="image/png" href="../icons/images.png">
+  <link href="./apps.css" rel="stylesheet">
+
+  <style>
+    .toolbar {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+      background: var(--panel);
+      color: var(--brown);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .toolbar button,
+    .toolbar select {
+      height: 36px;
+      padding: 0 12px;
+      border: 2px solid var(--brown);
+      border-radius: 18px;
+      background: #fff;
+      color: var(--brown);
+      font: inherit;
+    }
+
+    .toolbar button.on { background: var(--brown); color: var(--panel); }
+    .toolbar .group { display: flex; align-items: center; gap: 6px; }
+    #octaveLabel { min-width: 64px; text-align: center; }
+
+    .keyboard-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: stretch;
+      padding: 12px 6px calc(12px + env(safe-area-inset-bottom, 0px));
+    }
+
+    #keyboard {
+      position: relative;
+      flex: 1;
+      display: flex;
+      max-height: 420px;
+      margin: auto 0;
+      height: 100%;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .key {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 10px;
+      font-weight: 700;
+      pointer-events: auto;
+    }
+
+    .key.white {
+      flex: 1;
+      background: linear-gradient(#fff, #f3ece4);
+      border: 1px solid #5a3d29;
+      border-radius: 0 0 8px 8px;
+      color: var(--brown);
+    }
+
+    .key.black {
+      position: absolute;
+      top: 0;
+      height: 60%;
+      z-index: 2;
+      background: linear-gradient(#3a2a20, #1b120c);
+      border-radius: 0 0 6px 6px;
+      color: #ede0d4;
+      font-size: 11px;
+      padding-bottom: 6px;
+    }
+
+    .key.white.active { background: linear-gradient(#ddb892, #c9a27a); }
+    .key.black.active { background: linear-gradient(#7f5539, #5a3d29); }
+
+    .key .jp { font-size: 20px; line-height: 1; position: relative; }
+    .key.black .jp { font-size: 13px; }
+    .key .name { font-size: 11px; opacity: 0.6; margin-top: 3px; }
+    .key .dot-up, .key .dot-down { font-size: 10px; line-height: 6px; height: 6px; }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <a href="./index.html" aria-label="回更多 APP">‹ APP</a>
+    <h1>🎹 鋼琴</h1>
+  </div>
+
+  <div class="toolbar">
+    <div class="group">
+      <button id="octDown" aria-label="降八度">◀</button>
+      <span id="octaveLabel"></span>
+      <button id="octUp" aria-label="升八度">▶</button>
+    </div>
+    <div class="group">
+      <label for="keySelect">1 =</label>
+      <select id="keySelect"></select>
+    </div>
+    <button id="labelBtn">簡譜</button>
+    <button id="sustainBtn">延音</button>
+  </div>
+
+  <div class="keyboard-wrap">
+    <div id="keyboard"></div>
+  </div>
+
+  <script>
+    var NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    var KEY_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+    // semitone offset from the tonic -> 簡譜 degree ('#1' for sharps)
+    var DEGREES = ['1', '#1', '2', '#2', '3', '4', '#4', '5', '#5', '6', '#6', '7'];
+    var MIN_OCTAVE = 1;
+    var MAX_OCTAVE = 7;
+    // computer keyboard: one octave and a bit from the lowest visible C
+    var KEYMAP = { a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, o: 13, l: 14, p: 15, ';': 16 };
+
+    var state = {
+      startOctave: 4,
+      octaves: 1,
+      tonic: 0,
+      showJianpu: true,
+      sustain: false
+    };
+
+    // ---------- audio ----------
+
+    var ctx = null;
+    var master = null;
+    var voices = {};      // midi -> voice
+    var held = {};        // midi -> number of fingers/keys holding it
+
+    function audio() {
+      if (!ctx) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        ctx = new Ctx();
+        var comp = ctx.createDynamicsCompressor();
+        master = ctx.createGain();
+        master.gain.value = 0.5;
+        master.connect(comp);
+        comp.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    function freq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function noteOn(midi) {
+      var ac = audio();
+      if (voices[midi]) releaseVoice(voices[midi], 0.03);
+      var t = ac.currentTime;
+      var f = freq(midi);
+
+      var env = ac.createGain();
+      env.gain.setValueAtTime(0.0001, t);
+      env.gain.exponentialRampToValueAtTime(0.9, t + 0.005);
+      // piano-like: fast drop, then long decay (shorter for high notes)
+      var decay = Math.max(0.8, 3.5 - (midi - 48) * 0.05);
+      env.gain.exponentialRampToValueAtTime(0.35, t + 0.12);
+      env.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+
+      var filter = ac.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(Math.min(12000, f * 8), t);
+      filter.frequency.exponentialRampToValueAtTime(Math.min(8000, f * 3), t + 0.6);
+
+      var o1 = ac.createOscillator();
+      o1.type = 'triangle';
+      o1.frequency.value = f;
+      var o2 = ac.createOscillator();
+      o2.type = 'sine';
+      o2.frequency.value = f * 2;
+      var g2 = ac.createGain();
+      g2.gain.value = 0.25;
+      var o3 = ac.createOscillator();
+      o3.type = 'sawtooth';
+      o3.frequency.value = f;
+      o3.detune.value = 4;
+      var g3 = ac.createGain();
+      g3.gain.value = 0.06;
+
+      o1.connect(filter);
+      o2.connect(g2); g2.connect(filter);
+      o3.connect(g3); g3.connect(filter);
+      filter.connect(env);
+      env.connect(master);
+
+      var oscs = [o1, o2, o3];
+      oscs.forEach(function (o) { o.start(t); o.stop(t + decay + 0.1); });
+      voices[midi] = { env: env, oscs: oscs, midi: midi };
+    }
+
+    function releaseVoice(v, time) {
+      var t = ctx.currentTime;
+      v.env.gain.cancelScheduledValues(t);
+      v.env.gain.setValueAtTime(Math.max(v.env.gain.value, 0.0001), t);
+      v.env.gain.exponentialRampToValueAtTime(0.0001, t + time);
+      v.oscs.forEach(function (o) { try { o.stop(t + time + 0.05); } catch (e) {} });
+      if (voices[v.midi] === v) delete voices[v.midi];
+    }
+
+    function noteOff(midi) {
+      if (state.sustain) return;
+      var v = voices[midi];
+      if (v) releaseVoice(v, 0.25);
+    }
+
+    function press(midi) {
+      held[midi] = (held[midi] || 0) + 1;
+      if (held[midi] === 1) {
+        noteOn(midi);
+        setActive(midi, true);
+      }
+    }
+
+    function release(midi) {
+      if (!held[midi]) return;
+      held[midi]--;
+      if (held[midi] === 0) {
+        delete held[midi];
+        noteOff(midi);
+        setActive(midi, false);
+      }
+    }
+
+    // ---------- keyboard rendering ----------
+
+    var keyboard = document.getElementById('keyboard');
+
+    function fitOctaves() {
+      var w = keyboard.clientWidth || window.innerWidth;
+      // white keys about 44px+ wide; at least 1 octave, at most 3
+      var n = Math.max(1, Math.min(3, Math.floor(w / (7 * 44))));
+      state.octaves = n;
+      state.startOctave = Math.min(state.startOctave, MAX_OCTAVE - n + 1);
+    }
+
+    function render() {
+      keyboard.innerHTML = '';
+      var startMidi = (state.startOctave + 1) * 12;   // C4 = 60
+      var endMidi = startMidi + state.octaves * 12;    // include the top C
+      var whites = [];
+      for (var m = startMidi; m <= endMidi; m++) {
+        if (NOTE_NAMES[m % 12].length === 1) whites.push(m);
+      }
+      var whiteW = 100 / whites.length;
+      var whiteIndex = 0;
+      for (var midi = startMidi; midi <= endMidi; midi++) {
+        var isBlack = NOTE_NAMES[midi % 12].length > 1;
+        var el = document.createElement('div');
+        el.className = 'key ' + (isBlack ? 'black' : 'white');
+        el.dataset.midi = midi;
+        if (isBlack) {
+          el.style.width = (whiteW * 0.6) + '%';
+          el.style.left = (whiteW * whiteIndex - whiteW * 0.3) + '%';
+        } else {
+          whiteIndex++;
+        }
+        el.innerHTML = labelHtml(midi);
+        if (held[midi]) el.classList.add('active');
+        keyboard.appendChild(el);
+      }
+      document.getElementById('octaveLabel').textContent =
+        'C' + state.startOctave + '–C' + (state.startOctave + state.octaves);
+      document.getElementById('octDown').disabled = state.startOctave <= MIN_OCTAVE;
+      document.getElementById('octUp').disabled = state.startOctave + state.octaves > MAX_OCTAVE;
+    }
+
+    function labelHtml(midi) {
+      var name = NOTE_NAMES[midi % 12] + (Math.floor(midi / 12) - 1);
+      if (!state.showJianpu) return '<span class="jp">' + name + '</span>';
+      var rel = midi - (60 + state.tonic);   // degree 1 sits at the tonic of octave 4
+      var deg = DEGREES[((rel % 12) + 12) % 12];
+      var oct = Math.floor(rel / 12);
+      var up = oct > 0 ? '•'.repeat(oct) : '';
+      var down = oct < 0 ? '•'.repeat(-oct) : '';
+      return '<span class="dot-up">' + up + '</span>' +
+        '<span class="jp">' + deg + '</span>' +
+        '<span class="dot-down">' + down + '</span>' +
+        '<span class="name">' + name + '</span>';
+    }
+
+    function setActive(midi, on) {
+      var el = keyboard.querySelector('[data-midi="' + midi + '"]');
+      if (el) el.classList.toggle('active', on);
+    }
+
+    // ---------- pointer input (multi-touch + glissando) ----------
+
+    var pointers = {};   // pointerId -> midi
+
+    function midiAt(x, y) {
+      var el = document.elementFromPoint(x, y);
+      if (!el) return null;
+      var key = el.closest('.key');
+      if (!key || !keyboard.contains(key)) return null;
+      return Number(key.dataset.midi);
+    }
+
+    keyboard.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      var midi = midiAt(e.clientX, e.clientY);
+      if (midi === null) return;
+      pointers[e.pointerId] = midi;
+      press(midi);
+    });
+
+    keyboard.addEventListener('pointermove', function (e) {
+      if (!(e.pointerId in pointers)) return;
+      var midi = midiAt(e.clientX, e.clientY);
+      var prev = pointers[e.pointerId];
+      if (midi === prev) return;
+      if (prev !== null) release(prev);
+      pointers[e.pointerId] = midi;
+      if (midi !== null) press(midi);
+    });
+
+    function endPointer(e) {
+      if (!(e.pointerId in pointers)) return;
+      var midi = pointers[e.pointerId];
+      delete pointers[e.pointerId];
+      if (midi !== null) release(midi);
+    }
+    window.addEventListener('pointerup', endPointer);
+    window.addEventListener('pointercancel', endPointer);
+    keyboard.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    // ---------- computer keyboard ----------
+
+    var keysDown = {};
+    window.addEventListener('keydown', function (e) {
+      if (e.repeat || e.metaKey || e.ctrlKey || e.target.tagName === 'SELECT') return;
+      var k = e.key.toLowerCase();
+      if (!(k in KEYMAP)) return;
+      var midi = (state.startOctave + 1) * 12 + KEYMAP[k];
+      keysDown[k] = midi;
+      press(midi);
+    });
+    window.addEventListener('keyup', function (e) {
+      var k = e.key.toLowerCase();
+      if (!(k in keysDown)) return;
+      release(keysDown[k]);
+      delete keysDown[k];
+    });
+
+    // ---------- toolbar ----------
+
+    var keySelect = document.getElementById('keySelect');
+    KEY_NAMES.forEach(function (n, i) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = n;
+      keySelect.appendChild(opt);
+    });
+    keySelect.addEventListener('change', function () {
+      state.tonic = Number(keySelect.value);
+      render();
+    });
+
+    document.getElementById('octDown').addEventListener('click', function () {
+      if (state.startOctave > MIN_OCTAVE) { state.startOctave--; render(); }
+    });
+    document.getElementById('octUp').addEventListener('click', function () {
+      if (state.startOctave + state.octaves <= MAX_OCTAVE) { state.startOctave++; render(); }
+    });
+
+    var labelBtn = document.getElementById('labelBtn');
+    labelBtn.addEventListener('click', function () {
+      state.showJianpu = !state.showJianpu;
+      labelBtn.textContent = state.showJianpu ? '簡譜' : '音名';
+      keySelect.disabled = !state.showJianpu;
+      render();
+    });
+
+    var sustainBtn = document.getElementById('sustainBtn');
+    sustainBtn.addEventListener('click', function () {
+      state.sustain = !state.sustain;
+      sustainBtn.classList.toggle('on', state.sustain);
+      if (!state.sustain) {
+        Object.keys(voices).forEach(function (m) {
+          if (!held[m]) releaseVoice(voices[m], 0.25);
+        });
+      }
+    });
+
+    window.addEventListener('resize', function () { fitOctaves(); render(); });
+    fitOctaves();
+    render();
+  </script>
+</body>
+
+</html>
