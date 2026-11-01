@@ -103,7 +103,11 @@
         return function () { cancelled = true; if (off) off(); };
       },
       transact: function (code, fn) {
-        return ready.then(function (db) {
+        // the SDK retries forever when offline or misconfigured; give the player an answer
+        var timeout = new Promise(function (_, reject) {
+          setTimeout(function () { reject(new Error('連不上伺服器，請確認網路後再試一次')); }, 15000);
+        });
+        return Promise.race([timeout, ready.then(function (db) {
           return db.ref('rooms/' + code).transaction(function (current) {
             var next = fn(normalize(current));
             // Firebase first runs this against its (possibly empty) local cache. Returning
@@ -113,7 +117,7 @@
           }, null, false);
         }).then(function (result) {
           return normalize(result.snapshot.val());
-        });
+        })]);
       }
     };
   }
