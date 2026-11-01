@@ -33,8 +33,8 @@ repo as-is to GitHub Pages. There is no build step in CI either.
 - **Hymnal book browser** (`book-page` → `book-keyboard` → `book-song`): the user picks a
   songbook (radio buttons, values `D`/`B`/`N`/`X`/`L`), types a song number on the on-screen
   keypad, and the app renders that song as one or more `<img>` pages. Song images are pre-rendered
-  PNGs (not generated at runtime) with a per-book naming/path convention (see below); the app just
-  probes for `{page}.png`, `{page}-1.png`, `{page}-2.png`, ... until a probe 404s.
+  images (not generated at runtime) with a per-book naming/path convention (see below); the app just
+  probes for `{page}.webp`, `{page}-1.webp`, `{page}-2.webp`, ... until a probe 404s.
 - **Bible reader** (`read-page`): loads a New Testament book as Markdown from `bible/NewTestament/`,
   renders it with `marked.min.js`, splits paragraphs into per-line `<div class="line">`s, and offers
   click-to-read and "read all" via the browser's `SpeechSynthesis` API (`zh-TW`), with font-size
@@ -53,16 +53,18 @@ Each songbook is a directory of pre-rendered page images, one directory per book
 
 | Book code | Directory            | Filename pattern              | Number padding |
 |-----------|-----------------------|--------------------------------|-----------------|
-| `D`       | `shi_ge/`             | `D_NNN[-i].png`                | 3 digits        |
-| `B`       | `bu_chong_ben/`       | `B_NNNN[-i].png`                | 4 digits        |
-| `N`       | `xin_ge_song_yong/`   | `N_NNN[-i].png`                | 3 digits        |
-| `X`       | `hong_ben/`           | `X_NNN[-i].png`                | 3 digits        |
-| `L`       | `lan_ben/`            | `L_NNN[-i].png`                | 3 digits        |
+| `D`       | `shi_ge/`             | `D_NNN[-i].webp`               | 3 digits        |
+| `B`       | `bu_chong_ben/`       | `B_NNNN[-i].webp`               | 4 digits        |
+| `N`       | `xin_ge_song_yong/`   | `N_NNN[-i].webp`               | 3 digits        |
+| `X`       | `hong_ben/`           | `X_NNN[-i].webp`               | 3 digits        |
+| `L`       | `lan_ben/`            | `L_NNN[-i].webp`               | 3 digits        |
 
 The `-i` suffix (`-1`, `-2`, ...) marks continuation pages for a song that spans multiple images;
 `index.html`'s `submitInput()` probes sequential suffixes and stops at the first missing file.
-Adding a new song means adding correctly-named PNGs to the matching directory — no code changes
-needed.
+Song pages are lossless WebP (same pixels as the scanned PNGs, ~30% of the size). Adding a new
+song means adding correctly-named PNGs or WebPs to the matching directory — no code changes
+needed: the deploy workflow runs `tools/songs_to_webp.sh`, which converts any song PNG to
+WebP (run it locally too before testing new songs with `python server.py`).
 
 ### Bible content
 
@@ -116,5 +118,5 @@ installable as a home-screen PWA.
   the user turns that off.
 - `offline-songs.json` (book → files with size and hash) is generated, not committed: the
   deploy workflow runs `python3 tools/build_offline_index.py`. Run it yourself to test offline
-  downloads locally. Adding song PNGs still needs no code change.
+  downloads locally. Adding song images still needs no code change.
 - The Bible reader is intentionally not cached for offline use.

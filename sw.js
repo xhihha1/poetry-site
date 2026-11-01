@@ -38,7 +38,7 @@ var SHELL = [
 ];
 
 var SHELL_PATHS = SHELL.map(function (p) { return new URL(p, self.registration.scope).pathname; });
-var SONG_IMAGE = /\/(shi_ge|bu_chong_ben|xin_ge_song_yong|hong_ben|lan_ben)\/[^/]+\.png$/;
+var SONG_IMAGE = /\/(shi_ge|bu_chong_ben|xin_ge_song_yong|hong_ben|lan_ben)\/[^/]+\.webp$/;
 var SONG_JSON = /\/jianpu\/[^/]+\/[^/]+\.json$/;
 
 self.addEventListener('install', function (event) {

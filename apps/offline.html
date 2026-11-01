@@ -143,7 +143,7 @@
         var total = book.files.reduce(function (s, f) { return s + f[1]; }, 0);
         var st = bookStatus(book);
         var run = running[book.code];
-        var songs = book.files.filter(function (f) { return /\.png$/.test(f[0]); }).length;
+        var songs = book.files.filter(function (f) { return /\.webp$/.test(f[0]); }).length;
 
         var el = document.createElement('div');
         el.className = 'book';
@@ -257,6 +257,32 @@
       }).then(render);
     }
 
+    // Drop cached files that are no longer part of the site (e.g. the old .png pages
+    // after the switch to .webp) so they stop taking space and counting as downloaded.
+    function pruneStale() {
+      var jobs = index.books.map(function (book) {
+        var have = meta[book.code];
+        if (!have) return Promise.resolve();
+        var current = {};
+        book.files.forEach(function (f) { current[f[0]] = true; });
+        var stale = Object.keys(have).filter(function (p) { return !current[p]; });
+        if (!stale.length) return Promise.resolve();
+        return caches.open(bookCache(book.code)).then(function (cache) {
+          return Promise.all(stale.map(function (p) {
+            delete have[p];
+            return cache.delete(new URL(p, ROOT).href);
+          }));
+        });
+      });
+      var viewed = caches.open(VIEWED_CACHE).then(function (cache) {
+        return cache.keys().then(function (keys) {
+          return Promise.all(keys.filter(function (k) { return /\.png$/.test(k.url); })
+            .map(function (k) { return cache.delete(k); }));
+        });
+      });
+      return Promise.all(jobs.concat(viewed)).then(function () { return writeJson(META_URL, meta); });
+    }
+
     // ---------- start ----------
 
     function checkServiceWorker() {
@@ -289,6 +315,8 @@
         index = results[0];
         meta = results[1] || {};
         $('autoSave').checked = !results[2] || results[2].autoSave !== false;
+        return pruneStale();
+      }).then(function () {
         render();
         showViewed();
       }).catch(function () {

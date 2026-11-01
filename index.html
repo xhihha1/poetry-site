@@ -338,7 +338,7 @@
       let imageExistsFlag = true;
 
       while (imageExistsFlag) {
-        const src = `${srcBase}${index > 0 ? '-' + index : ''}.png`;
+        const src = `${srcBase}${index > 0 ? '-' + index : ''}.webp`;
         const exists = await imageExists(src);
         
         if (exists) {

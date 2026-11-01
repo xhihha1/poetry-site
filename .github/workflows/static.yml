@@ -31,6 +31,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Convert song PNGs to WebP
+        run: |
+          if find shi_ge bu_chong_ben xin_ge_song_yong hong_ben lan_ben -maxdepth 1 -name '*.png' | grep -q .; then
+            sudo apt-get install -y webp
+            tools/songs_to_webp.sh
+          fi
       - name: Build offline song list
         run: python3 tools/build_offline_index.py
       - name: Setup Pages

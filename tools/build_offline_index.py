@@ -42,7 +42,7 @@ def entries(rel_dir, ext):
 def main():
     books = []
     for code, name, folder in BOOKS:
-        files = entries(folder, '.png') + entries('jianpu/' + code, '.json')
+        files = entries(folder, '.webp') + entries('jianpu/' + code, '.json')
         books.append({'code': code, 'name': name, 'files': files})
     index = {'generated': int(time.time()), 'books': books}
     with open(os.path.join(ROOT, 'offline-songs.json'), 'w', encoding='utf-8') as f:
