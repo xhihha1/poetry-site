@@ -91,6 +91,12 @@ and in `script/newTestament.js`/`bible.html` — keep them in sync if books are 
   (`apps/index.html`, a card list). `piano.html` and `drum.html` are self-contained (Web Audio
   synthesis inline, no libraries) and share `apps/apps.css` for the top bar. Adding a tool means
   a new page in `apps/` plus one `<a class="app-item">` card in `apps/index.html`.
+- `apps/tiles.html` — 捷運拼牌, a 2–4 player online tile game. Rules are pure functions in
+  `apps/tiles/rules.js` (no DOM; runs under node too). Rooms are stored through
+  `apps/tiles/net.js`: Firebase Realtime Database (`rooms/{4-digit code}`, every move is a
+  transaction on the whole room) when `apps/tiles/firebase-config.js` has a config, otherwise a
+  localStorage fallback where tabs on one device act as separate players (player id is per tab
+  in that mode). A turn is edited locally and only written on 完成/抽牌.
 - `backup.html` — appears to be a leftover "add to home screen" demo/reference page, not linked
   from `index.html`.
 

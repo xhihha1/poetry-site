@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#7f5539">
+  <title>捷運拼牌</title>
+  <link rel="icon" type="image/png" href="../icons/images.png">
+  <link href="./apps.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --c0: #d7262e;   /* 紅線 */
+      --c1: #0b6fb8;   /* 藍線 */
+      --c2: #0d8a4f;   /* 綠線 */
+      --c3: #e38400;   /* 橘線 */
+      --tile-w: 34px;
+      --tile-h: 46px;
+    }
+
+    .screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+    .card {
+      max-width: 420px;
+      width: calc(100% - 24px);
+      margin: 16px auto;
+      padding: 16px;
+      background: var(--panel);
+      border-radius: 14px;
+      color: var(--brown);
+    }
+
+    .card h2 { margin: 0 0 12px; font-size: 18px; }
+    .card p { margin: 6px 0; font-size: 14px; line-height: 1.5; }
+
+    .field { display: flex; gap: 8px; margin-bottom: 12px; }
+
+    .field input {
+      flex: 1;
+      min-width: 0;
+      height: 44px;
+      padding: 0 12px;
+      border: 2px solid var(--brown);
+      border-radius: 10px;
+      font: inherit;
+      font-size: 18px;
+    }
+
+    .btn {
+      height: 44px;
+      padding: 0 16px;
+      border: 2px solid var(--brown);
+      border-radius: 22px;
+      background: #fff;
+      color: var(--brown);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .btn.primary { background: var(--brown); color: var(--panel); }
+    .btn:disabled { opacity: 0.4; }
+    .btn.block { width: 100%; }
+
+    .notice {
+      max-width: 420px;
+      width: calc(100% - 24px);
+      margin: 12px auto 0;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: #fff3cd;
+      color: #7a5a00;
+      font-size: 13px;
+    }
+
+    .error { color: #b5452b; font-weight: 700; min-height: 1.4em; }
+
+    .room-code {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: 8px;
+      text-align: center;
+      margin: 4px 0 8px;
+    }
+
+    .player-list { list-style: none; margin: 0 0 12px; padding: 0; }
+
+    .player-list li {
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: #fff;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .rules { font-size: 13px; }
+    .rules li { margin-bottom: 4px; }
+
+    /* ---------- game ---------- */
+
+    .players {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 6px;
+      padding: 6px 8px;
+      overflow-x: auto;
+      background: var(--panel);
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      padding: 4px 10px;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      background: #fff;
+      color: var(--brown);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .chip.turn { border-color: var(--brown); background: var(--soft); }
+    .chip.pool { background: transparent; }
+
+    .status {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 4px 10px;
+      color: var(--panel);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .status .msg { flex: 1; }
+    .status.mine { background: #6b8e23; }
+    .status.bad { background: #b5452b; }
+
+    .status button {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--panel);
+      border-radius: 14px;
+      background: transparent;
+      color: var(--panel);
+      font-size: 13px;
+    }
+
+    .board {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .set {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 4px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.12);
+    }
+
+    .set.invalid { border-color: #ffb3a1; background: rgba(181, 69, 43, 0.35); }
+
+    .slot {
+      height: var(--tile-h);
+      min-width: var(--tile-w);
+      padding: 0 8px;
+      border: 2px dashed var(--panel);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--panel);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .board-empty { color: var(--panel); opacity: 0.7; margin: auto; font-size: 15px; }
+
+    .tile {
+      position: relative;
+      flex: 0 0 auto;
+      width: var(--tile-w);
+      height: var(--tile-h);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      background: linear-gradient(#fffdf7, #efe6d6);
+      box-shadow: 0 2px 0 #b9a68c;
+      font-weight: 800;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .tile .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; border: 2px solid currentColor; background: #fff; }
+    .tile.c0 { color: var(--c0); }
+    .tile.c1 { color: var(--c1); }
+    .tile.c2 { color: var(--c2); }
+    .tile.c3 { color: var(--c3); }
+
+    .tile.wild {
+      font-size: 17px;
+      color: #fff;
+      background: conic-gradient(var(--c0) 0 25%, var(--c1) 0 50%, var(--c2) 0 75%, var(--c3) 0);
+      box-shadow: 0 2px 0 #555;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+
+    .tile.played { box-shadow: 0 2px 0 #b9a68c, 0 0 0 2px #fff inset; outline: 2px solid #ffe08a; }
+    .tile.sel { transform: translateY(-6px); outline: 3px solid #2f80ed; outline-offset: 1px; }
+
+    .hand-area {
+      flex: 0 0 auto;
+      max-height: 40%;
+      display: flex;
+      flex-direction: column;
+      background: var(--brown);
+    }
+
+    .hand {
+      overflow: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 10px 8px 6px;
+    }
+
+    .actions {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 6px;
+      padding: 6px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .actions .btn { flex: 1; height: 42px; padding: 0 6px; font-size: 15px; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .overlay .card { margin: 0; }
+
+    .score-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--soft); font-weight: 700; }
+
+    @media (min-width: 600px) {
+      :root { --tile-w: 40px; --tile-h: 54px; }
+      .tile { font-size: 24px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <a href="./index.html" aria-label="回更多 APP">‹ APP</a>
+    <h1>🚇 捷運拼牌</h1>
+    <button id="helpBtn" aria-label="玩法">?</button>
+  </div>
+
+  <!-- 大廳 -->
+  <div class="screen main" id="lobby" hidden>
+    <div class="notice" id="localNotice" hidden>
+      本機測試模式：還沒設定 Firebase，只有這台裝置上的其他分頁能加入。
+    </div>
+    <div class="card">
+      <h2>你的名字</h2>
+      <div class="field"><input id="nameInput" maxlength="8" placeholder="例如：老公"></div>
+      <button class="btn primary block" id="createBtn">開新房間</button>
+    </div>
+    <div class="card">
+      <h2>加入房間</h2>
+      <div class="field">
+        <input id="codeInput" inputmode="numeric" maxlength="4" placeholder="4 位數房號">
+        <button class="btn" id="joinBtn">加入</button>
+      </div>
+      <button class="btn block" id="rejoinBtn" hidden></button>
+      <p class="error" id="lobbyError"></p>
+    </div>
+  </div>
+
+  <!-- 等待開始 -->
+  <div class="screen main" id="wait" hidden>
+    <div class="card">
+      <p>房號（給其他人輸入）</p>
+      <div class="room-code" id="waitCode"></div>
+      <button class="btn block" id="shareBtn">分享邀請連結</button>
+    </div>
+    <div class="card">
+      <h2>玩家（<span id="waitCount"></span>/4）</h2>
+      <ul class="player-list" id="waitPlayers"></ul>
+      <button class="btn primary block" id="startBtn">開始遊戲</button>
+      <p id="waitHint"></p>
+      <button class="btn block" id="leaveBtn">離開房間</button>
+    </div>
+  </div>
+
+  <!-- 遊戲 -->
+  <div class="screen" id="game" hidden>
+    <div class="players" id="players"></div>
+    <div class="status" id="status"><span class="msg" id="statusMsg"></span></div>
+    <div class="board" id="board"></div>
+    <div class="hand-area">
+      <div class="hand" id="hand"></div>
+      <div class="actions">
+        <button class="btn" id="sortBtn">依顏色</button>
+        <button class="btn" id="undoBtn">復原</button>
+        <button class="btn" id="drawBtn">抽牌</button>
+        <button class="btn primary" id="doneBtn">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="endOverlay" hidden>
+    <div class="card">
+      <h2 id="endTitle"></h2>
+      <div id="endScores"></div>
+      <p>分數 = 手上剩下的點數（轉乘牌算 30），越少越好。</p>
+      <button class="btn primary block" id="againBtn">再來一局</button>
+      <p></p>
+      <button class="btn block" id="exitBtn">回大廳</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="helpOverlay" hidden>
+    <div class="card">
+      <h2>玩法</h2>
+      <ul class="rules">
+        <li>牌有紅、藍、綠、橘四條線，每條線 1～13 號站各兩張，另外有 2 張「轉」轉乘牌可以當任何牌。</li>
+        <li>每人 14 張。輪到你時，把牌拼成一組一組放到桌上：<b>同一條線連號 3 張以上</b>（如 紅 4-5-6），或<b>同號不同線 3～4 張</b>（如 紅7 藍7 綠7）。</li>
+        <li>第一次出牌要用自己的牌，點數加起來 30 以上。之後可以接在桌上的組，也可以把桌上的牌拆開重組，只要最後每一組都成立。</li>
+        <li>不能出牌（或不想出）就按「抽牌」，換下一個人。</li>
+        <li>先把手牌出完的人贏。</li>
+        <li>操作：點牌選取（可以選多張），再點組後面的「＋」或「新的一組」放上去。弄亂了就按「復原」。</li>
+      </ul>
+      <button class="btn primary block" id="helpClose">知道了</button>
+    </div>
+  </div>
+
+  <script src="./tiles/rules.js"></script>
+  <script src="./tiles/net.js"></script>
+  <script src="./tiles/firebase-config.js"></script>
+  <script>
+    var R = TileRules;
+    var net = TileNet.create(window.TILES_FIREBASE_CONFIG);
+    // local test mode: each tab is its own player, so keep the id per tab
+    var idStore = net.mode === 'local' ? sessionStorage : localStorage;
+
+    function storeGet(s, k) { try { return s.getItem(k); } catch (e) { return null; } }
+    function storeSet(s, k, v) { try { s.setItem(k, v); } catch (e) {} }
+
+    var me = storeGet(idStore, 'tiles:pid');
+    if (!me) {
+      me = 'p' + Math.random().toString(36).slice(2, 10);
+      storeSet(idStore, 'tiles:pid', me);
+    }
+
+    var code = null;
+    var room = null;
+    var unsubscribe = null;
+    var work = null;        // my in-progress turn: {board, hand, startHand}
+    var workKey = null;
+    var selected = [];
+    var message = '';
+    var messageBad = false;
+    var sortMode = storeGet(localStorage, 'tiles:sort') || 'color';
+    var lastTurnWasMine = false;
+
+    var $ = function (id) { return document.getElementById(id); };
+
+    // ---------- room actions ----------
+
+    function stamp(state, last) {
+      return Object.assign({}, state, { move: (state.move || 0) + 1, last: last || null, updatedAt: Date.now() });
+    }
+
+    // Run a game update in a transaction; update(cur) returns {state} or {error}.
+    function act(update) {
+      var error = null;
+      return net.transact(code, function (cur) {
+        error = null;
+        if (!cur) { error = '房間不存在了'; return undefined; }
+        var r = update(cur);
+        if (r.error) { error = r.error; return undefined; }
+        return r.state;
+      }).then(function (s) {
+        if (error) throw new Error(error);
+        return s;
+      });
+    }
+
+    function myName() {
+      var name = $('nameInput').value.trim();
+      if (!name) { $('lobbyError').textContent = '請先輸入名字'; $('nameInput').focus(); return null; }
+      storeSet(localStorage, 'tiles:name', name);
+      return name;
+    }
+
+    function createRoom(tries) {
+      var name = myName();
+      if (!name) return;
+      var c = String(Math.floor(1000 + Math.random() * 9000));
+      var created = false;
+      net.transact(c, function (cur) {
+        created = false;
+        if (cur) return undefined;
+        created = true;
+        var players = {};
+        players[me] = { name: name, seat: 0 };
+        return { code: c, status: 'lobby', host: me, players: players, move: 0, createdAt: Date.now() };
+      }).then(function (s) {
+        if (created && s && s.host === me) enterRoom(c);
+        else if ((tries || 0) < 5) createRoom((tries || 0) + 1);
+        else $('lobbyError').textContent = '開房失敗，請再試一次';
+      }).catch(showLobbyError);
+    }
+
+    function joinRoom(c) {
+      var name = myName();
+      if (!name) return;
+      if (!/^\d{4}$/.test(c)) { $('lobbyError').textContent = '房號是 4 位數字'; return; }
+      var error = null;
+      net.transact(c, function (cur) {
+        error = null;
+        if (!cur) { error = '找不到房間 ' + c; return undefined; }
+        var players = Object.assign({}, cur.players);
+        if (players[me]) {
+          players[me] = Object.assign({}, players[me], { name: name });
+          return Object.assign({}, cur, { players: players });
+        }
+        if (cur.status !== 'lobby') { error = '這個房間的遊戲已經開始了'; return undefined; }
+        var seats = Object.keys(players).map(function (p) { return players[p].seat; });
+        if (seats.length >= 4) { error = '房間已滿（最多 4 人）'; return undefined; }
+        players[me] = { name: name, seat: Math.max.apply(null, seats.concat(-1)) + 1 };
+        return Object.assign({}, cur, { players: players });
+      }).then(function () {
+        if (error) throw new Error(error);
+        enterRoom(c);
+      }).catch(showLobbyError);
+    }
+
+    function showLobbyError(e) {
+      $('lobbyError').textContent = e.message || String(e);
+    }
+
+    function enterRoom(c) {
+      if (unsubscribe) unsubscribe();
+      code = c;
+      room = undefined;
+      storeSet(localStorage, 'tiles:lastRoom', c);
+      history.replaceState(null, '', '?room=' + c);
+      unsubscribe = net.subscribe(c, function (s) {
+        room = s;
+        render();
+      });
+    }
+
+    function leaveRoom() {
+      var c = code;
+      var r = room;
+      if (unsubscribe) unsubscribe();
+      unsubscribe = null;
+      code = null;
+      room = null;
+      work = null;
+      workKey = null;
+      history.replaceState(null, '', location.pathname);
+      if (r && r.status === 'lobby') {
+        net.transact(c, function (cur) {
+          if (!cur || !cur.players[me]) return undefined;
+          var players = Object.assign({}, cur.players);
+          delete players[me];
+          var rest = Object.keys(players);
+          if (!rest.length) return null;
+          var host = cur.host === me ? rest[0] : cur.host;
+          return Object.assign({}, cur, { players: players, host: host });
+        });
+      }
+      render();
+    }
+
+    function startGame() {
+      act(function (cur) {
+        if (cur.host !== me) return { error: '只有房主可以開始' };
+        var order = Object.keys(cur.players).sort(function (a, b) { return cur.players[a].seat - cur.players[b].seat; });
+        if (order.length < 2) return { error: '至少要 2 個人' };
+        return { state: stamp(R.deal(Object.assign({}, cur, { order: order })), null) };
+      }).catch(showStatusError);
+    }
+
+    function playAgain() {
+      act(function (cur) {
+        if (cur.status !== 'ended') return { error: '遊戲還沒結束' };
+        return { state: stamp(R.deal(cur), null) };
+      }).catch(showStatusError);
+    }
+
+    function drawTile() {
+      act(function (cur) {
+        var r = R.draw(cur, me);
+        if (r.error) return r;
+        return { state: stamp(r.state, { pid: me, action: 'draw' }) };
+      }).catch(showStatusError);
+    }
+
+    function skipPlayer() {
+      var who = room.order[room.turn];
+      act(function (cur) {
+        if (cur.order[cur.turn] !== who) return { error: '已經換人了' };
+        var r = R.skip(cur);
+        if (r.error) return r;
+        return { state: stamp(r.state, { pid: who, action: 'skip' }) };
+      }).catch(showStatusError);
+    }
+
+    function finishTurn() {
+      var board = work.board.map(function (s) { return s.slice(); });
+      var hand = work.hand.slice();
+      var count = work.startHand.length - hand.length;
+      act(function (cur) {
+        var r = R.commit(cur, me, board, hand);
+        if (r.error) return r;
+        return { state: stamp(r.state, { pid: me, action: 'play', count: count }) };
+      }).catch(showStatusError);
+    }
+
+    function showStatusError(e) {
+      message = e.message || String(e);
+      messageBad = true;
+      render();
+    }
+
+    // ---------- turn editing (local until 完成) ----------
+
+    function syncWork() {
+      var mine = room && room.status === 'playing' && room.order[room.turn] === me;
+      if (!mine) {
+        work = null;
+        workKey = null;
+        selected = [];
+        lastTurnWasMine = false;
+        return;
+      }
+      var key = room.round + ':' + room.move;
+      if (workKey === key) return;
+      workKey = key;
+      work = {
+        board: room.board.map(function (s) { return s.slice(); }),
+        hand: room.hands[me].slice(),
+        startHand: room.hands[me].slice()
+      };
+      selected = [];
+      message = '';
+      if (!lastTurnWasMine && navigator.vibrate) navigator.vibrate(120);
+      lastTurnWasMine = true;
+    }
+
+    function toggle(id) {
+      if (!work) return;
+      var i = selected.indexOf(id);
+      if (i >= 0) selected.splice(i, 1);
+      else selected.push(id);
+      message = '';
+      render();
+    }
+
+    function removeSelected() {
+      var ids = selected;
+      work.hand = work.hand.filter(function (t) { return ids.indexOf(t) < 0; });
+      work.board = work.board.map(function (set) { return set.filter(function (t) { return ids.indexOf(t) < 0; }); });
+    }
+
+    function moveTo(target) {
+      if (!work || !selected.length) return;
+      var ids = selected.slice();
+      removeSelected();
+      if (target === 'new') work.board.push(ids);
+      else work.board[target] = work.board[target].concat(ids);
+      work.board = work.board.filter(function (set) { return set.length; });
+      selected = [];
+      render();
+    }
+
+    function returnToHand() {
+      var back = selected.filter(function (t) { return work.startHand.indexOf(t) >= 0 && work.hand.indexOf(t) < 0; });
+      if (!back.length) return;
+      selected = back;
+      removeSelected();
+      work.board = work.board.filter(function (set) { return set.length; });
+      work.hand = work.hand.concat(back);
+      selected = [];
+      render();
+    }
+
+    function undo() {
+      workKey = null;
+      syncWork();
+      render();
+    }
+
+    // ---------- rendering ----------
+
+    function nameOf(pid) {
+      return (room.players[pid] && room.players[pid].name) || '?';
+    }
+
+    function tileEl(id) {
+      var el = document.createElement('div');
+      if (R.isWild(id)) {
+        el.className = 'tile wild';
+        el.textContent = '轉';
+      } else {
+        el.className = 'tile c' + R.color(id);
+        el.innerHTML = '<span>' + R.num(id) + '</span><span class="dot"></span>';
+      }
+      if (selected.indexOf(id) >= 0) el.classList.add('sel');
+      el.addEventListener('click', function (e) { e.stopPropagation(); toggle(id); });
+      return el;
+    }
+
+    function show(id) {
+      ['lobby', 'wait', 'game'].forEach(function (s) { $(s).hidden = s !== id; });
+    }
+
+    function render() {
+      if (!code) return renderLobby();
+      if (room === undefined) return;   // waiting for the first snapshot
+      if (!room) {
+        code = null;
+        $('lobbyError').textContent = '房間已經不存在了';
+        return renderLobby();
+      }
+      if (room.status === 'lobby') return renderWait();
+      if (room.order.indexOf(me) < 0) {
+        var c = code;
+        leaveRoom();
+        $('lobbyError').textContent = '房間 ' + c + ' 的遊戲已經開始了';
+        return;
+      }
+      renderGame();
+    }
+
+    function renderLobby() {
+      show('lobby');
+      $('localNotice').hidden = net.mode !== 'local';
+      var last = storeGet(localStorage, 'tiles:lastRoom');
+      $('rejoinBtn').hidden = !last;
+      $('rejoinBtn').textContent = '回到上次的房間 ' + last;
+      $('endOverlay').hidden = true;
+    }
+
+    function renderWait() {
+      show('wait');
+      $('endOverlay').hidden = true;
+      $('waitCode').textContent = code;
+      var ids = Object.keys(room.players).sort(function (a, b) { return room.players[a].seat - room.players[b].seat; });
+      $('waitCount').textContent = ids.length;
+      var ul = $('waitPlayers');
+      ul.innerHTML = '';
+      ids.forEach(function (pid) {
+        var li = document.createElement('li');
+        li.textContent = nameOf(pid) + (pid === room.host ? '（房主）' : '') + (pid === me ? '（你）' : '');
+        ul.appendChild(li);
+      });
+      var host = room.host === me;
+      $('startBtn').hidden = !host;
+      $('startBtn').disabled = ids.length < 2;
+      $('waitHint').textContent = host
+        ? (ids.length < 2 ? '等其他人加入（2～4 人）…' : '人到齊了就按開始')
+        : '等房主 ' + nameOf(room.host) + ' 開始遊戲…';
+    }
+
+    function renderGame() {
+      show('game');
+      syncWork();
+      var mine = !!work;
+      var current = room.order[room.turn];
+
+      // players
+      var bar = $('players');
+      bar.innerHTML = '';
+      room.order.forEach(function (pid) {
+        var chip = document.createElement('div');
+        chip.className = 'chip' + (pid === current && room.status === 'playing' ? ' turn' : '');
+        chip.textContent = nameOf(pid) + (pid === me ? '(你)' : '') + ' ' + (room.hands[pid] || []).length + '張' +
+          (room.melded[pid] ? '' : ' ·未破冰');
+        bar.appendChild(chip);
+      });
+      var pool = document.createElement('div');
+      pool.className = 'chip pool';
+      pool.textContent = '牌堆 ' + room.pool.length;
+      bar.appendChild(pool);
+
+      // status line
+      var status = $('status');
+      var text = message;
+      if (!text) {
+        if (room.status !== 'playing') text = '遊戲結束';
+        else if (mine) text = room.melded[me] ? '輪到你了！' : '輪到你了！第一次出牌要 30 點以上';
+        else text = '等 ' + nameOf(current) + ' 出牌…';
+        if (room.last && room.last.pid !== me && room.status === 'playing') {
+          var who = nameOf(room.last.pid);
+          var what = room.last.action === 'play' ? '出了 ' + room.last.count + ' 張' :
+            room.last.action === 'skip' ? '被跳過' : '抽了一張';
+          text = who + ' ' + what + '。' + text;
+        }
+      }
+      status.className = 'status' + (messageBad && message ? ' bad' : mine ? ' mine' : '');
+      $('statusMsg').textContent = text;
+      var oldSkip = status.querySelector('button');
+      if (oldSkip) oldSkip.remove();
+      if (!mine && room.status === 'playing' && room.host === me) {
+        var skip = document.createElement('button');
+        skip.textContent = '跳過他';
+        skip.addEventListener('click', function () {
+          if (confirm('確定跳過 ' + nameOf(current) + ' 這一輪？（算他抽一張牌）')) skipPlayer();
+        });
+        status.appendChild(skip);
+      }
+
+      // board
+      var boardEl = $('board');
+      boardEl.innerHTML = '';
+      var board = mine ? work.board : room.board;
+      var played = mine ? work.startHand : [];
+      board.forEach(function (set, i) {
+        var info = R.analyzeSet(set);
+        var setEl = document.createElement('div');
+        setEl.className = 'set' + (mine && !info ? ' invalid' : '');
+        (info ? info.ordered : set).forEach(function (id) {
+          var t = tileEl(id);
+          if (played.indexOf(id) >= 0) t.classList.add('played');
+          setEl.appendChild(t);
+        });
+        if (mine && selected.length) {
+          var slot = document.createElement('button');
+          slot.className = 'slot';
+          slot.textContent = '＋';
+          slot.addEventListener('click', function () { moveTo(i); });
+          setEl.appendChild(slot);
+        }
+        boardEl.appendChild(setEl);
+      });
+      if (mine && selected.length) {
+        var newSet = document.createElement('button');
+        newSet.className = 'slot';
+        newSet.textContent = '＋ 新的一組';
+        newSet.addEventListener('click', function () { moveTo('new'); });
+        boardEl.appendChild(newSet);
+      }
+      if (!board.length && !(mine && selected.length)) {
+        var empty = document.createElement('div');
+        empty.className = 'board-empty';
+        empty.textContent = mine ? '點手牌選取，再按「新的一組」放上桌' : '桌上還沒有牌';
+        boardEl.appendChild(empty);
+      }
+
+      // hand
+      var handEl = $('hand');
+      handEl.innerHTML = '';
+      var hand = (mine ? work.hand : room.hands[me]).slice().sort(sortMode === 'color' ? R.byColor : R.byNumber);
+      hand.forEach(function (id) { handEl.appendChild(tileEl(id)); });
+      if (mine && selected.some(function (t) { return work.startHand.indexOf(t) >= 0 && work.hand.indexOf(t) < 0; })) {
+        var back = document.createElement('button');
+        back.className = 'slot';
+        back.textContent = '↩ 收回手牌';
+        back.addEventListener('click', returnToHand);
+        handEl.appendChild(back);
+      }
+
+      // actions
+      $('sortBtn').textContent = sortMode === 'color' ? '依顏色' : '依號碼';
+      $('undoBtn').disabled = !mine;
+      $('drawBtn').disabled = !mine;
+      $('drawBtn').textContent = room.pool.length ? '抽牌' : '跳過';
+      $('doneBtn').disabled = !mine || work.hand.length === work.startHand.length;
+
+      // game over
+      var over = room.status === 'ended';
+      $('endOverlay').hidden = !over;
+      if (over) {
+        $('endTitle').textContent = room.winner === me ? '🎉 你贏了！' : '🏁 ' + nameOf(room.winner) + ' 贏了';
+        var scores = $('endScores');
+        scores.innerHTML = '';
+        room.order.slice().sort(function (a, b) { return room.scores[a] - room.scores[b]; }).forEach(function (pid) {
+          var row = document.createElement('div');
+          row.className = 'score-row';
+          row.innerHTML = '<span></span><span></span>';
+          row.children[0].textContent = nameOf(pid) + (pid === room.winner ? ' 👑' : '');
+          row.children[1].textContent = room.scores[pid] + ' 點';
+          scores.appendChild(row);
+        });
+      }
+    }
+
+    // ---------- wiring ----------
+
+    $('nameInput').value = storeGet(localStorage, 'tiles:name') || '';
+    $('createBtn').addEventListener('click', function () { $('lobbyError').textContent = ''; createRoom(0); });
+    $('joinBtn').addEventListener('click', function () { $('lobbyError').textContent = ''; joinRoom($('codeInput').value.trim()); });
+    $('codeInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('joinBtn').click(); });
+    $('rejoinBtn').addEventListener('click', function () {
+      $('lobbyError').textContent = '';
+      joinRoom(storeGet(localStorage, 'tiles:lastRoom'));
+    });
+    $('startBtn').addEventListener('click', startGame);
+    $('leaveBtn').addEventListener('click', leaveRoom);
+    $('exitBtn').addEventListener('click', leaveRoom);
+    $('againBtn').addEventListener('click', playAgain);
+    $('shareBtn').addEventListener('click', function () {
+      var url = location.origin + location.pathname + '?room=' + code;
+      var text = '來玩捷運拼牌！房號 ' + code;
+      if (navigator.share) {
+        navigator.share({ title: '捷運拼牌', text: text, url: url }).catch(function () {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(text + ' ' + url).then(function () { $('shareBtn').textContent = '已複製連結'; });
+      }
+    });
+    $('sortBtn').addEventListener('click', function () {
+      sortMode = sortMode === 'color' ? 'number' : 'color';
+      storeSet(localStorage, 'tiles:sort', sortMode);
+      render();
+    });
+    $('undoBtn').addEventListener('click', undo);
+    $('drawBtn').addEventListener('click', drawTile);
+    $('doneBtn').addEventListener('click', finishTurn);
+    $('hand').addEventListener('click', function () { if (work && selected.length) returnToHand(); });
+    $('helpBtn').addEventListener('click', function () { $('helpOverlay').hidden = false; });
+    $('helpClose').addEventListener('click', function () { $('helpOverlay').hidden = true; });
+
+    var params = new URLSearchParams(location.search);
+    var linkRoom = params.get('room');
+    render();
+    if (linkRoom && /^\d{4}$/.test(linkRoom)) {
+      $('codeInput').value = linkRoom;
+      // already a member (reload, or came back from another page): go straight in
+      net.transact(linkRoom, function () { return undefined; }).then(function (s) {
+        if (s && s.players[me]) enterRoom(linkRoom);
+      });
+    }
+  </script>
+</body>
+
+</html>
