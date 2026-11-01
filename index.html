@@ -20,7 +20,7 @@
   <!-- Fallback icon for older Android browsers -->
   <link rel="icon" sizes="192x192" href="./icons/images.png">
 
-  <link href="./style/main.css?v=3" rel="stylesheet">
+  <link href="./style/main.css?v=4" rel="stylesheet">
   <link href="./style/newTestament.css" rel="stylesheet">
 
   <script src="./script/marked.min.js"></script>
@@ -349,6 +349,15 @@
         }
       }
 
+      if (index === 0) {
+        var notFound = document.createElement('p');
+        notFound.className = 'song-missing';
+        notFound.textContent = navigator.onLine
+          ? `找不到 ${bookLabelMapping(selectedValue)} 第 ${inputField.value} 首（網路不穩時，可先到 更多 APP → 離線詩歌 下載）`
+          : `目前沒有網路，這首還沒下載離線（更多 APP → 離線詩歌）`;
+        document.getElementById('book-song').appendChild(notFound);
+      }
+
       toSongPage();
     }
 
@@ -406,6 +415,11 @@
       var menu = document.getElementById('more-menu');
       if (!menu.hidden && !menu.contains(e.target)) menu.hidden = true;
     });
+
+    // offline support for downloaded songs (see sw.js and apps/offline.html)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(function () {});
+    }
   </script>
   <script src="./script/newTestament.js"></script>
 </body>

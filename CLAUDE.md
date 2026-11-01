@@ -100,7 +100,21 @@ and in `script/newTestament.js`/`bible.html` — keep them in sync if books are 
 - `backup.html` — appears to be a leftover "add to home screen" demo/reference page, not linked
   from `index.html`.
 
-### PWA setup
+### PWA setup and offline songs
 
 `manifest.json` + the `<link rel="manifest">`/apple-* meta tags in `index.html` make the site
-installable as a home-screen PWA. There is no service worker.
+installable as a home-screen PWA.
+
+`sw.js` (registered by `index.html` and `apps/offline.html`) makes the hymnal work offline:
+- The app shell listed in `SHELL` (index, css, js, covers, icons) is network-first with a cached
+  fallback. If you add a file `index.html` needs, add it to `SHELL`; if you bump a `?v=` query
+  in `index.html`, bump it there too.
+- Song images (the five book directories) and `jianpu/` JSON are served from Cache Storage when
+  present. `apps/offline.html` downloads whole books into one cache per book (`songs-D`, ...)
+  and records each file's hash in the `offline-settings` cache, so it can offer to re-download
+  songs that were added or changed. Songs viewed online also go into `songs-viewed` unless
+  the user turns that off.
+- `offline-songs.json` (book → files with size and hash) is generated, not committed: the
+  deploy workflow runs `python3 tools/build_offline_index.py`. Run it yourself to test offline
+  downloads locally. Adding song PNGs still needs no code change.
+- The Bible reader is intentionally not cached for offline use.

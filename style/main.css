@@ -217,6 +217,12 @@ body {
     max-width: 100%;
     height: auto;
   }
+  #book-song .song-missing{
+    margin: 40px 16px;
+    color: #ede0d4;
+    font-size: 18px;
+    font-weight: 700;
+  }
   .ReadBtn{
     width: 40px;
     height: 40px;
