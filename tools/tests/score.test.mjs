@@ -42,18 +42,22 @@ try {
   await send('Page.navigate', { url: BASE + '/index.html' });
   await sleep(1500);
 
-  // 1. real D_178 (no lyrics yet): only images + the old play bar
-  const plain = await evaluate(`
+  // 1. real D_178: 4 verses, chorus written once in w1 (85 + 3 x 60 syllables)
+  const real = await evaluate(`
     toKeyboardPage(); addNumber(1); addNumber(7); addNumber(8); await submitInput();
     await new Promise(r => setTimeout(r, 600));
-    return { imgs: document.querySelectorAll('#book-song img').length, score: !!document.getElementById('song-score'),
-             bar: !document.getElementById('song-player').hidden };`);
-  check('song without lyrics: images only, play bar kept', plain.imgs >= 1 && !plain.score && plain.bar, plain);
+    const box = document.getElementById('song-score');
+    return { imgs: document.querySelectorAll('#book-song img').length, score: !!box,
+             verses: box ? [...box.querySelectorAll('.sc-verse')].map(b => b.textContent) : [],
+             labels: box ? [...box.querySelectorAll('.sc-label')].map(e => e.textContent) : [],
+             syl: box ? [...box.querySelectorAll('.sc-syl')].filter(e => e.textContent).length : 0 };`);
+  check('real D_178 lyrics: 4 verses, 2 labels, 265 syllables',
+    real.imgs >= 1 && real.score && real.verses.length === 4 && real.labels.length === 2 && real.syl === 85 + 3 * 60, real);
 
   // 2. inject test lyrics (2 verses, chorus only in w1) and render
   const shown = await evaluate(`
     const w1 = '一二三四五六七八九十'.repeat(9).slice(0, 84);
-    currentSongJson = Object.assign({}, currentSongJson, { source: currentSongJson.source + '\\nw1: ' + w1 + '\\nw2: ' + '甲乙丙丁'.repeat(16) });
+    currentSongJson = Object.assign({}, currentSongJson, { source: currentSongJson.source.replace(/^w\\d*\\s*[:：].*$/gm, '') + '\\nw1: ' + w1 + '\\nw2: ' + '甲乙丙丁'.repeat(16) });
     renderSongScore();
     const box = document.getElementById('song-score');
     const afterImages = box && box.previousElementSibling && box.previousElementSibling.tagName === 'IMG';
@@ -123,7 +127,7 @@ try {
   const shot = await send('Page.captureScreenshot', { format: 'png' });
   await evaluate(`toKeyboardPage(); addNumber(1); addNumber(7); addNumber(8); await submitInput(); await new Promise(r => setTimeout(r, 500));
     const w1 = '一二三四五六七八九十'.repeat(9).slice(0, 84);
-    currentSongJson = Object.assign({}, currentSongJson, { source: currentSongJson.source + '\\nw1: ' + w1 + '\\nw2: ' + '甲乙丙丁'.repeat(16) });
+    currentSongJson = Object.assign({}, currentSongJson, { source: currentSongJson.source.replace(/^w\\d*\\s*[:：].*$/gm, '') + '\\nw1: ' + w1 + '\\nw2: ' + '甲乙丙丁'.repeat(16) });
     renderSongScore(); document.getElementById('song-score').scrollIntoView(); document.querySelector('.sc-play').click(); await new Promise(r => setTimeout(r, 1500)); return 1;`);
   const shot2 = await send('Page.captureScreenshot', { format: 'png' });
   writeFileSync(process.argv[3] || join(tmpdir(), 'score.png'), Buffer.from(shot2.result.data, 'base64'));
