@@ -18,6 +18,8 @@ var SHELL = [
   './style/newTestament.css',
   './script/marked.min.js',
   './script/jianpuPlayer.js',
+  './script/songScore.js',
+  './style/songScore.css',
   './script/newTestament.js',
   './icons/images.png',
   './assets/cover/shi_ge.png',

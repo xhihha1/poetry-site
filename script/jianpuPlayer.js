@@ -12,6 +12,7 @@ var jianpuPlayer = (function () {
   var audioCtx = null;
   var oscillators = [];
   var endTimer = null;
+  var noteTimers = [];
   var onEnd = null;
 
   function songUrl(book, paddedNumber) {
@@ -59,13 +60,17 @@ var jianpuPlayer = (function () {
     oscillators.forEach(function (o) { try { o.stop(); } catch (e) { /* already stopped */ } });
     oscillators = [];
     clearTimeout(endTimer);
+    noteTimers.forEach(clearTimeout);
+    noteTimers = [];
     var cb = onEnd;
     onEnd = null;
     if (cb) cb();
   }
 
   // options.intro: sound the tonic, then only the first few measures.
-  // options.onEnd: called once when playback finishes or is stopped.
+  // options.startIndex: skip that many notes (counting rests, across measures) first.
+  // options.onNote(index): called as each note starts, with the same counting.
+  // options.onEnd(finished): called once when playback finishes (true) or is stopped.
   function play(song, options) {
     options = options || {};
     stop();
@@ -81,16 +86,29 @@ var jianpuPlayer = (function () {
       t += primer + 0.15;
       measures = measures.slice(0, INTRO_MEASURES);
     }
+    var index = 0;
+    var startIndex = options.startIndex || 0;
+    var startTime = audioCtx.currentTime;
     measures.forEach(function (m) {
       m.forEach(function (note) {
+        var i = index++;
+        if (i < startIndex) return;
         var dur = note.dur * qsec;
         if (note.n !== 0) tone(midiOf(song, note), t, dur);
+        if (options.onNote) {
+          noteTimers.push(setTimeout(function () { options.onNote(i); }, Math.max(0, (t - startTime) * 1000)));
+        }
         t += dur;
       });
     });
 
     onEnd = options.onEnd || null;
-    endTimer = setTimeout(stop, (t - audioCtx.currentTime) * 1000 + 100);
+    endTimer = setTimeout(function () {
+      var cb = onEnd;
+      onEnd = null;
+      stop();
+      if (cb) cb(true);
+    }, (t - audioCtx.currentTime) * 1000 + 100);
   }
 
   return { songUrl: songUrl, load: load, play: play, stop: stop };

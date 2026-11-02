@@ -25,6 +25,8 @@
 
   <script src="./script/marked.min.js"></script>
   <script src="./script/jianpuPlayer.js"></script>
+  <script src="./script/songScore.js"></script>
+  <link href="./style/songScore.css" rel="stylesheet">
 
   <style>
   </style>
@@ -149,6 +151,7 @@
     let selectedValue;
     let currentSongJson = null;
     let songJsonRequest = 0;
+    let songImagesDone = -1;
     showCurrentBookTitle();
     showElement();
 
@@ -332,6 +335,7 @@
         if (document.getElementById('book-song').style.display === 'block') {
           document.getElementById('song-player').hidden = !song;
         }
+        renderSongScore();
       });
 
       let index = 0;
@@ -358,7 +362,23 @@
         document.getElementById('book-song').appendChild(notFound);
       }
 
+      if (request === songJsonRequest) {
+        songImagesDone = request;
+        renderSongScore();
+      }
       toSongPage();
+    }
+
+    // Songs whose 簡譜 JSON has lyric lines get an interactive score under the images
+    // (script/songScore.js); the rest keep showing only the images.
+    function renderSongScore() {
+      var old = document.getElementById('song-score');
+      if (old) old.remove();
+      if (songImagesDone !== songJsonRequest || !songScore.hasLyrics(currentSongJson)) return;
+      var box = document.createElement('div');
+      box.id = 'song-score';
+      document.getElementById('book-song').appendChild(box);
+      songScore.render(box, currentSongJson, jianpuPlayer);
     }
 
     function clearElement(id) {

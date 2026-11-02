@@ -16,7 +16,17 @@ python server.py        # serves the repo root at http://localhost:8000
 or on Windows, double-click `run.bat`, which starts `server.py` and opens
 `http://localhost:8000/bible.html` in Chrome.
 
-There is no build/lint/test step — edit HTML/CSS/JS directly and reload the browser.
+There is no build/lint step — edit HTML/CSS/JS directly and reload the browser. Tests live in
+`tools/tests/` and are run by hand (the browser ones need Google Chrome and start their own
+servers):
+
+```bash
+node tools/tests/tiles-rules.test.js
+python3 tools/build_offline_index.py && node tools/tests/offline.test.mjs .
+node tools/tests/score.test.mjs .
+```
+
+See `HANDOFF.md` for the current state of work and open items.
 
 ## Deployment
 
@@ -89,6 +99,15 @@ and in `script/newTestament.js`/`bible.html` — keep them in sync if books are 
   by `script/jianpuPlayer.js`, which plays the JSON's `measures` field (no notation parsing). The
   mobile editor opens songs from here (`?song=D_178` or its 詩歌庫 sheet); both editors load
   `D_178.json` as the first-visit example.
+- Lyrics: a song JSON's `source` may contain lyric lines `w1: …`, `w2: …` (one per verse). The
+  editors only keep them (desktop skips them when parsing notes; mobile stores them as a
+  `lyrics` line and writes them back). `script/songScore.js` parses `source` itself (notes,
+  slurs, labels, lyrics — not the JSON's `measures`), and `index.html`'s `renderSongScore()` puts
+  the interactive score under the song images only when `songScore.hasLyrics()` is true.
+  Syllables: one CJK char per note; rests and slur continuations get none; `_` = empty; a verse
+  shorter than the melody borrows the rest from w1 (chorus written once). Playback goes through
+  `jianpuPlayer.play(song, {startIndex, onNote, onEnd})`, where indexes count every note/rest in
+  play order — keep songScore's note list and jianpuPlayer's counting in sync.
 - `apps/` — small standalone tool apps, reached from the ☰ menu's「更多 APP」entry
   (`apps/index.html`, a card list). `piano.html` and `drum.html` are self-contained (Web Audio
   synthesis inline, no libraries) and share `apps/apps.css` for the top bar. Adding a tool means

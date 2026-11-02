@@ -121,6 +121,13 @@
     .score-line { padding: 0 4px; }
     .score-line.empty-hint { color: var(--muted); font-size: 13px; padding: 4px 14px; }
 
+    .lyrics-line {
+      margin: 4px 0;
+      color: var(--muted);
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
     .section-label {
       margin: 10px 10px 0;
       padding: 4px 8px;
@@ -566,6 +573,9 @@
         if (trimmed === '') {
           // collapse runs of blank lines and drop leading ones
           if (body.length && body[body.length - 1].type !== 'blank') body.push({ type: 'blank' });
+        } else if (/^w\d*\s*[:：]/i.test(trimmed)) {
+          // lyric line (w1: …) — kept as text, shown by the song page's score view
+          body.push({ type: 'lyrics', text: trimmed });
         } else if (trimmed.charAt(0) === '#' && !/[0-9]/.test(trimmed.charAt(1) || '')) {
           body.push({ type: 'label', text: trimmed.replace(/^#\s*/, '') });
         } else {
@@ -590,6 +600,7 @@
       d.lines.forEach(function (l) {
         if (l.type === 'blank') out.push('');
         else if (l.type === 'label') out.push('# ' + l.text);
+        else if (l.type === 'lyrics') out.push(l.text);
         else out.push(l.tokens.join(' '));
       });
       return out.join('\n');
@@ -1040,6 +1051,11 @@
           lbl.textContent = line.text;
           lbl.addEventListener('click', function () { editLabel(line.li); });
           frag.appendChild(lbl);
+        } else if (line.type === 'lyrics') {
+          var ly = document.createElement('div');
+          ly.className = 'lyrics-line';
+          ly.textContent = line.text;
+          frag.appendChild(ly);
         } else {
           renderMusicLine(line, maxW, frag);
         }

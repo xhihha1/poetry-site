@@ -1,0 +1,104 @@
+/* Interactive 簡譜 + lyrics under a song's images (script/songScore.js) */
+.song-score {
+  width: 100%;
+  max-width: 720px;
+  margin: 12px auto 120px;
+  padding: 10px 8px 16px;
+  box-sizing: border-box;
+  background: #fffaf2;
+  color: #3b2a1e;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.sc-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 10px;
+  background: #fffaf2;
+}
+
+.sc-bar button {
+  height: 36px;
+  padding: 0 12px;
+  border: 2px solid #7f5539;
+  border-radius: 18px;
+  background: #fff;
+  color: #7f5539;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sc-bar button.on,
+.sc-bar button.playing {
+  background: #7f5539;
+  color: #ede0d4;
+}
+
+.sc-hint { font-size: 12px; color: #9c6644; }
+
+.sc-label {
+  margin: 12px 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #9c6644;
+}
+
+.sc-row {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sc-measure {
+  display: flex;
+  padding: 0 4px;
+  border-right: 1px solid #c9b29b;
+}
+
+.sc-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 26px;
+}
+
+.sc-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 2px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sc-oct { height: 8px; font-size: 8px; line-height: 8px; }
+
+.sc-num {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.sc-num small { font-size: 11px; vertical-align: top; }
+.sc-num b { font-weight: 700; }
+.sc-u1 { border-bottom: 1.5px solid currentColor; }
+.sc-u2 { border-bottom: 4px double currentColor; }
+
+.sc-syl {
+  min-height: 24px;
+  padding: 0 2px;
+  font-size: 17px;
+  line-height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sc-now { background: #f2c14e; color: #3b2a1e; }

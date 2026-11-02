@@ -468,6 +468,8 @@
         var lineNo = li + 1;
         var trimmed = raw.trim();
         if (trimmed === '') continue;
+        // lyric lines (w1: …) are for the song page's score view, not notes
+        if (/^w\d*\s*[:：]/i.test(trimmed)) continue;
 
         if (trimmed.charAt(0) === '#' && !/[0-9]/.test(trimmed.charAt(1) || '')) {
           rows.push({ type: 'label', text: trimmed.replace(/^#\s*/, ''), lineNo: lineNo });
