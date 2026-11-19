@@ -20,7 +20,7 @@
   <!-- Fallback icon for older Android browsers -->
   <link rel="icon" sizes="192x192" href="./icons/images.png">
 
-  <link href="./style/main.css?v=4" rel="stylesheet">
+  <link href="./style/main.css?v=5" rel="stylesheet">
   <link href="./style/newTestament.css" rel="stylesheet">
 
   <script src="./script/marked.min.js"></script>
@@ -33,83 +33,93 @@
 </head>
 
 <body>
-  <div id="current-book">當前選擇: <span id="current-book-title">大本詩歌</span></div>
+  <div id="current-book"><span id="current-book-title">大本詩歌</span></div>
+  <button id="share-btn" hidden onclick="shareSong()" aria-label="分享這首詩歌">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.9l7.6-3.8M8.2 13.1l7.6 3.8"/></svg>
+    分享
+  </button>
+  <div id="toast" role="status" aria-live="polite"></div>
   <div id="body-container">
     <div class="block-area" id="book-page">
+      <section id="recent-wrap" hidden>
+        <h2 class="section-title">最近看過</h2>
+        <div id="recent-list" class="chip-row"></div>
+      </section>
+      <h2 class="section-title">詩歌本</h2>
       <div class="radio-buttons">
         <div class="book-item">
           <label onclick="toKeyboardPage()">
             <input type="radio" name="songType" value="D" checked onchange="changeBookFunc()">
-            大本詩歌(D)
-            <img src="./assets/cover/shi_ge.png">
+            <img src="./assets/cover/shi_ge.png" alt="">
+            <span class="book-name">大本詩歌</span>
           </label>
         </div>
         <div class="book-item">
           <label onclick="toKeyboardPage()">
             <input type="radio" name="songType" value="B" onchange="changeBookFunc()">
-            補充本詩歌(B)
-            <img src="./assets/cover/bu_chong_ben.png">
+            <img src="./assets/cover/bu_chong_ben.png" alt="">
+            <span class="book-name">補充本詩歌</span>
           </label>
         </div>
         <div class="book-item">
           <label onclick="toKeyboardPage()">
             <input type="radio" name="songType" value="N" onchange="changeBookFunc()">
-            新歌頌詠(N)
-            <img src="./assets/cover/xin_ge_song_yong.png">
+            <img src="./assets/cover/xin_ge_song_yong.png" alt="">
+            <span class="book-name">新歌頌詠</span>
           </label>
         </div>
         <div class="book-item">
           <label onclick="toKeyboardPage()">
             <input type="radio" name="songType" value="X" onchange="changeBookFunc()">
-            新詩(X)
-            <img src="./assets/cover/xin_shi.png">
+            <img src="./assets/cover/xin_shi.png" alt="">
+            <span class="book-name">新詩(紅)</span>
           </label>
         </div>
         <div class="book-item">
           <label onclick="toKeyboardPage()">
             <input type="radio" name="songType" value="L" onchange="changeBookFunc()">
-            新詩藍(L)
-            <img src="./assets/cover/lan_ben.png">
+            <img src="./assets/cover/lan_ben.png" alt="">
+            <span class="book-name">新詩(藍)</span>
           </label>
         </div>
         <div class="book-item">
           <label onclick="toReadPage()">
             <input type="radio" name="songType" value="NewTestament" onchange="changeBibleFunc()">
-            新約聖經(恢復本)
-            <img src="./assets/cover/newTestament.jpg">
+            <img src="./assets/cover/newTestament.jpg" alt="">
+            <span class="book-name">新約聖經(恢復本)</span>
           </label>
         </div>
       </div>
     </div>
-  
-    
-  
+
     <div class="block-area" id="book-keyboard">
-      <h1 id="keyboard-title"></h1>
-      <div class="inputFieldArea">
-        <input type="text" id="inputField" readonly>
-      </div>
-      <div class="grid-container">
-        <div class="grid-item item1"><button onclick="addNumber(1)">1</button></div>
-        <div class="grid-item item2"><button onclick="addNumber(2)">2</button></div>
-        <div class="grid-item item3"><button onclick="addNumber(3)">3</button></div>
-        <div class="grid-item item4"><button onclick="addNumber(4)">4</button></div>
-        <div class="grid-item item5"><button onclick="addNumber(5)">5</button></div>
-        <div class="grid-item item6"><button onclick="addNumber(6)">6</button></div>
-        <div class="grid-item item7"><button onclick="addNumber(7)">7</button></div>
-        <div class="grid-item item8"><button onclick="addNumber(8)">8</button></div>
-        <div class="grid-item item9"><button onclick="addNumber(9)">9</button></div>
-        <div class="grid-item itemC"><button onclick="clearInput()">清除</button></div>
-        <div class="grid-item item0"><button onclick="addNumber(0)">0</button></div>
-        <div class="grid-item itemB"><button onclick="backspace()">退格</button></div>
-        <div class="grid-item itemE"><button onclick="submitInput()" class="wide">確定</button></div>
+      <div class="keypad">
+        <div id="book-chips" class="chip-row"></div>
+        <div class="keypad-display">
+          <input type="text" id="inputField" readonly placeholder="歌號" aria-label="歌號">
+          <p id="keyboard-title"></p>
+        </div>
+        <div class="grid-container">
+          <button class="key" onclick="addNumber(1)">1</button>
+          <button class="key" onclick="addNumber(2)">2</button>
+          <button class="key" onclick="addNumber(3)">3</button>
+          <button class="key" onclick="addNumber(4)">4</button>
+          <button class="key" onclick="addNumber(5)">5</button>
+          <button class="key" onclick="addNumber(6)">6</button>
+          <button class="key" onclick="addNumber(7)">7</button>
+          <button class="key" onclick="addNumber(8)">8</button>
+          <button class="key" onclick="addNumber(9)">9</button>
+          <button class="key key-text" onclick="clearInput()">清除</button>
+          <button class="key" onclick="addNumber(0)">0</button>
+          <button class="key" onclick="backspace()" aria-label="退格">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h11v14H9l-6-7z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>
+          </button>
+        </div>
+        <button id="open-btn" class="open-btn" onclick="submitInput()">輸入歌號</button>
       </div>
     </div>
-    
-  
-    <div class="block-area" id="book-song">
-      <img id="poetryImage" src="https://www.churchinmontereypark.org/Docs/sg/da/img/D165.jpg" />
-    </div>
+
+    <div class="block-area" id="book-song"></div>
 
     <div class="block-area" id="read-page">
       <div id="readingList">
@@ -129,10 +139,14 @@
     </div>
   </div>
   <div id="body-tab">
-    <div class="book-tab-item" id="selectBook"><a href="#book-page" onclick="toBookPage()">換書</a></div>
-    <div class="book-tab-item" id="selectSong"><a href="#book-song" onclick="toSongPage()">歌</a></div>
-    <div class="book-tab-item" id="selectPage"><a href="#book-keyboard" onclick="toKeyboardPage()">換頁</a></div>
-    <div class="book-tab-item book-tab-menu"><a onclick="toggleMoreMenu(event)" aria-label="更多功能">☰</a></div>
+    <div class="book-tab-item" id="selectBook"><a role="button" onclick="toBookPage()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16 6l3.5-1 3 13.5-3.5 1z"/></svg><span>選書</span></a></div>
+    <div class="book-tab-item" id="selectSong"><a role="button" onclick="toSongPage()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="17" r="3"/><circle cx="17" cy="15" r="3"/><path d="M10 17V5l10-2v12"/></svg><span>歌譜</span></a></div>
+    <div class="book-tab-item" id="selectPage"><a role="button" onclick="toKeyboardPage()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="5" r="1.3"/><circle cx="12" cy="5" r="1.3"/><circle cx="18" cy="5" r="1.3"/><circle cx="6" cy="11" r="1.3"/><circle cx="12" cy="11" r="1.3"/><circle cx="18" cy="11" r="1.3"/><circle cx="6" cy="17" r="1.3"/><circle cx="12" cy="17" r="1.3"/><circle cx="18" cy="17" r="1.3"/><circle cx="12" cy="22" r="1.3"/></svg><span>歌號</span></a></div>
+    <div class="book-tab-item book-tab-menu"><a role="button" onclick="toggleMoreMenu(event)" aria-label="更多功能">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>更多</span></a></div>
   </div>
   <div id="song-player" hidden>
     <button id="songIntroBtn" onclick="playSongJson(true)">起調</button>
@@ -152,8 +166,37 @@
     let currentSongJson = null;
     let songJsonRequest = 0;
     let songImagesDone = -1;
+    let currentSong = null; // { book, num } of the song on the song page, once found
+
+    // Song range per book. max is a fallback hint; refreshed from offline-songs.json
+    // (generated on deploy) so new songs don't need a code change.
+    const BOOKS = {
+      D: { name: '大本詩歌', short: '大本', dir: 'shi_ge', pad: 3, max: 780 },
+      B: { name: '補充本詩歌', short: '補充', dir: 'bu_chong_ben', pad: 4, max: 1005 },
+      N: { name: '新歌頌詠', short: '新歌', dir: 'xin_ge_song_yong', pad: 3, max: 130 },
+      X: { name: '新詩(紅)', short: '新詩紅', dir: 'hong_ben', pad: 3, max: 77 },
+      L: { name: '新詩(藍)', short: '新詩藍', dir: 'lan_ben', pad: 3, max: 94 }
+    };
+    const RECENT_KEY = 'poetry:recent-v1';
+    const RECENT_MAX = 8;
+
+    fetch('./offline-songs.json').then(function (r) { return r.ok ? r.json() : null; }).then(function (index) {
+      if (!index) return;
+      index.books.forEach(function (b) {
+        if (!BOOKS[b.code]) return;
+        let max = 0;
+        b.files.forEach(function (f) {
+          const m = /_(\d+)\.webp$/.exec(f[0]);
+          if (m) max = Math.max(max, parseInt(m[1], 10));
+        });
+        if (max) BOOKS[b.code].max = max;
+      });
+      updateKeypad();
+    }).catch(function () {});
+
+    renderBookChips();
     showCurrentBookTitle();
-    showElement();
+    renderRecent();
 
     function showElement(id) {
       if (typeof id === 'undefined') {
@@ -174,6 +217,7 @@
       }
       jianpuPlayer.stop();
       document.getElementById('song-player').hidden = true;
+      document.getElementById('share-btn').hidden = true;
       var elements = document.getElementsByClassName('block-area');
       for (var i = 0; i < elements.length; i++) {
         elements[i].style.display = 'none';
@@ -181,46 +225,66 @@
     }
 
     function showCurrentBookTitle () {
-      document.getElementById('keyboard-title').innerText = bookLabelMapping(selectedValue);
+      updateKeypad();
       document.getElementById('current-book-title').innerText = bookLabelMapping(selectedValue);
     }
 
     function bookLabelMapping (bookLabel) {
-      if(bookLabel === 'NewTestament') {
-        return '新約聖經 恢復本';
-      } else if (bookLabel === 'B') {
-        return '補充本詩歌';
-      } else if (bookLabel === 'N') {
-        return '新歌頌詠';
-      } else if (bookLabel === 'X') {
-        return '新詩(紅)';
-      } else if (bookLabel === 'L') {
-        return '新詩(藍)';
-      } else {
-        return '大本詩歌';
-      }
+      if (bookLabel === 'NewTestament') return '新約聖經 恢復本';
+      return (BOOKS[bookLabel] || BOOKS.D).name;
+    }
+
+    function checkedBook () {
+      const radio = document.querySelector('input[name="songType"]:checked');
+      return radio ? radio.value : 'D';
     }
 
     function changeBookFunc () {
-      const radios = document.getElementsByName('songType');
-      for (const radio of radios) {
-        if (radio.checked) {
-          selectedValue = radio.value;
-          break;
-        }
-      }
+      selectedValue = checkedBook();
+      const input = document.getElementById('inputField');
+      const max = (BOOKS[selectedValue] || BOOKS.D).pad;
+      if (input.value.length > max) input.value = input.value.slice(0, max);
       showCurrentBookTitle();
     }
 
     function changeBibleFunc () {
-      const radios = document.getElementsByName('songType');
-      for (const radio of radios) {
-        if (radio.checked) {
-          selectedValue = radio.value;
-          break;
-        }
-      }
+      selectedValue = checkedBook();
       document.getElementById('current-book-title').innerText = bookLabelMapping(selectedValue);
+    }
+
+    function selectBook (code) {
+      const radio = document.querySelector(`input[name="songType"][value="${code}"]`);
+      if (!radio) return;
+      radio.checked = true;
+      changeBookFunc();
+    }
+
+    function renderBookChips () {
+      const box = document.getElementById('book-chips');
+      box.innerHTML = '';
+      Object.keys(BOOKS).forEach(function (code) {
+        const chip = document.createElement('button');
+        chip.className = 'chip';
+        chip.dataset.book = code;
+        chip.textContent = BOOKS[code].short;
+        chip.onclick = function () { selectBook(code); };
+        box.appendChild(chip);
+      });
+    }
+
+    // Keypad page: selected chip, range hint and the open button's label
+    function updateKeypad () {
+      const code = BOOKS[selectedValue] ? selectedValue : checkedBook();
+      const book = BOOKS[code];
+      if (!book) return;
+      document.querySelectorAll('#book-chips .chip').forEach(function (chip) {
+        chip.classList.toggle('selected', chip.dataset.book === code);
+      });
+      document.getElementById('keyboard-title').innerText = `${book.name} · 1–${book.max}`;
+      const value = document.getElementById('inputField').value;
+      const btn = document.getElementById('open-btn');
+      btn.textContent = value ? `打開第 ${value} 首` : '輸入歌號';
+      btn.classList.toggle('ready', !!value);
     }
 
     function setTabBarMode(mode) {
@@ -229,19 +293,122 @@
       document.getElementById('selectPage').style.display = display;
     }
 
+    function setActiveTab (id) {
+      document.querySelectorAll('.book-tab-item').forEach(function (tab) {
+        tab.classList.toggle('active', tab.id === id);
+      });
+      document.body.dataset.page = id || '';
+    }
+
+    // The address bar always holds a link to the song on screen (?song=D_355),
+    // so it can be shared or reloaded; other pages get the bare page URL.
+    function songKey (book, num) {
+      return `${book}_${padNumber(num, BOOKS[book].pad)}`;
+    }
+
+    function setPageUrl (song) {
+      const url = location.pathname + (song ? `?song=${songKey(song.book, song.num)}` : '');
+      if (location.pathname + location.search + location.hash !== url) {
+        history.replaceState(null, '', url);
+      }
+    }
+
+    function songShareUrl (song) {
+      return `${location.origin}${location.pathname}?song=${songKey(song.book, song.num)}`;
+    }
+
+    function parseSongParam (value) {
+      const m = /^([DBNXL])[_-]?0*(\d{1,4})$/i.exec((value || '').trim());
+      if (!m) return null;
+      const book = m[1].toUpperCase();
+      const num = parseInt(m[2], 10);
+      return num > 0 ? { book: book, num: num } : null;
+    }
+
+    function openSong (book, num) {
+      selectBook(book);
+      document.getElementById('inputField').value = String(num);
+      updateKeypad();
+      return submitInput();
+    }
+
+    async function shareSong () {
+      if (!currentSong) return;
+      const url = songShareUrl(currentSong);
+      const title = `${BOOKS[currentSong.book].name} 第 ${currentSong.num} 首`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: title, text: title, url: url });
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('已複製連結');
+      } catch (e) {
+        window.prompt('複製這個連結分享：', url);
+      }
+    }
+
+    let toastTimer = null;
+    function showToast (text) {
+      const toast = document.getElementById('toast');
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2000);
+    }
+
+    function loadRecent () {
+      try {
+        const list = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+        return Array.isArray(list) ? list.filter(function (s) { return s && BOOKS[s.book] && s.num > 0; }) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function addRecent (song) {
+      const list = loadRecent().filter(function (s) { return !(s.book === song.book && s.num === song.num); });
+      list.unshift({ book: song.book, num: song.num });
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
+      } catch (e) {}
+      renderRecent();
+    }
+
+    function renderRecent () {
+      const list = loadRecent();
+      const box = document.getElementById('recent-list');
+      box.innerHTML = '';
+      list.forEach(function (s) {
+        const chip = document.createElement('button');
+        chip.className = 'chip';
+        chip.textContent = `${BOOKS[s.book].short} ${s.num}`;
+        chip.onclick = function () { openSong(s.book, s.num); };
+        box.appendChild(chip);
+      });
+      document.getElementById('recent-wrap').hidden = list.length === 0;
+    }
+
     function toBookPage () {
       hideAllBlockAreas();
       showElement('book-page');
-      document.getElementById('book-page').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('body-container').scrollTop = 0;
       setTabBarMode('hymn');
+      setActiveTab('selectBook');
+      setPageUrl(null);
     }
 
     function toKeyboardPage () {
       hideAllBlockAreas();
       showElement('book-keyboard');
-      document.getElementById('book-keyboard').scrollIntoView({ behavior: 'smooth' });
       clearInput();
       setTabBarMode('hymn');
+      setActiveTab('selectPage');
+      setPageUrl(null);
     }
 
     function toSongPage () {
@@ -249,7 +416,14 @@
       showElement('book-song');
       document.getElementById('book-song').scrollIntoView({ behavior: 'smooth' });
       document.getElementById('song-player').hidden = !currentSongJson;
+      document.getElementById('share-btn').hidden = !currentSong;
+      if (currentSong) {
+        document.getElementById('current-book-title').innerText =
+          `${BOOKS[currentSong.book].name} ${currentSong.num}`;
+      }
       setTabBarMode('hymn');
+      setActiveTab('selectSong');
+      setPageUrl(currentSong);
     }
 
     function toReadPage () {
@@ -258,22 +432,42 @@
       document.getElementById('read-page').scrollIntoView({ behavior: 'smooth' });
       clearInput();
       setTabBarMode('bible');
+      setActiveTab('');
+      setPageUrl(null);
     }
 
     function addNumber(num) {
       const inputField = document.getElementById('inputField');
+      const book = BOOKS[selectedValue] || BOOKS[checkedBook()] || BOOKS.D;
+      if (inputField.value === '' && num === 0) return;
+      if (inputField.value.length >= book.pad) return;
       inputField.value += num;
+      updateKeypad();
     }
 
     function clearInput() {
       const inputField = document.getElementById('inputField');
       inputField.value = '';
+      updateKeypad();
     }
 
     function backspace() {
       const inputField = document.getElementById('inputField');
       inputField.value = inputField.value.slice(0, -1);
+      updateKeypad();
     }
+
+    // Typing on a real keyboard works on the keypad page too
+    document.addEventListener('keydown', function (e) {
+      if (document.getElementById('book-keyboard').style.display !== 'block') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (/^[0-9]$/.test(e.key)) addNumber(parseInt(e.key, 10));
+      else if (e.key === 'Backspace') backspace();
+      else if (e.key === 'Escape') clearInput();
+      else if (e.key === 'Enter') submitInput();
+      else return;
+      e.preventDefault();
+    });
 
     function padNumber(num, l) {
       if (typeof l === 'undefined') {
@@ -294,44 +488,24 @@
 
     async function submitInput() {
       const inputField = document.getElementById('inputField');
-      const radios = document.getElementsByName('songType');
+      const num = parseInt(inputField.value, 10);
+      if (!(num > 0)) return;
 
-      for (const radio of radios) {
-        if (radio.checked) {
-          selectedValue = radio.value;
-          break;
-        }
-      }
-
-      const paddedNumber = padNumber(inputField.value, selectedValue === 'B' ? 4 : 3);
-      let srcBase;
-      
-      switch (selectedValue) {
-        case 'B':
-          srcBase = `./bu_chong_ben/${selectedValue}_${paddedNumber}`;
-          break;
-        case 'N':
-          srcBase = `./xin_ge_song_yong/${selectedValue}_${paddedNumber}`;
-          break;
-        case 'L':
-          srcBase = `./lan_ben/${selectedValue}_${paddedNumber}`;
-          break;
-        case 'X':
-          srcBase = `./hong_ben/${selectedValue}_${paddedNumber}`;
-          break;
-        default:
-          srcBase = `./shi_ge/${selectedValue}_${paddedNumber}`;
-      }
+      selectedValue = checkedBook();
+      const book = BOOKS[selectedValue];
+      const paddedNumber = padNumber(num, book.pad);
+      const srcBase = `./${book.dir}/${selectedValue}_${paddedNumber}`;
 
       clearElement('book-song');
       currentSongJson = null;
-      const songKey = `${selectedValue}_${paddedNumber}`;
+      currentSong = null;
+      const fileKey = `${selectedValue}_${paddedNumber}`;
       const request = ++songJsonRequest;
       jianpuPlayer.load(selectedValue, paddedNumber).then(function (song) {
         // ignore a late answer for a song the user already moved past
         if (request !== songJsonRequest) return;
         currentSongJson = song;
-        document.getElementById('songEditLink').href = `./jianpu-mobile.html?song=${songKey}`;
+        document.getElementById('songEditLink').href = `./jianpu-mobile.html?song=${fileKey}`;
         if (document.getElementById('book-song').style.display === 'block') {
           document.getElementById('song-player').hidden = !song;
         }
@@ -353,19 +527,22 @@
         }
       }
 
+      if (request !== songJsonRequest) return; // the user opened another song meanwhile
+
       if (index === 0) {
         var notFound = document.createElement('p');
         notFound.className = 'song-missing';
         notFound.textContent = navigator.onLine
-          ? `找不到 ${bookLabelMapping(selectedValue)} 第 ${inputField.value} 首（網路不穩時，可先到 更多 APP → 離線詩歌 下載）`
+          ? `找不到 ${book.name} 第 ${num} 首（網路不穩時，可先到 更多 APP → 離線詩歌 下載）`
           : `目前沒有網路，這首還沒下載離線（更多 APP → 離線詩歌）`;
         document.getElementById('book-song').appendChild(notFound);
+      } else {
+        currentSong = { book: selectedValue, num: num };
+        addRecent(currentSong);
       }
 
-      if (request === songJsonRequest) {
-        songImagesDone = request;
-        renderSongScore();
-      }
+      songImagesDone = request;
+      renderSongScore();
       toSongPage();
     }
 
@@ -437,6 +614,19 @@
     });
 
     // offline support for downloaded songs (see sw.js and apps/offline.html)
+    selectedValue = checkedBook();
+    // after script/newTestament.js has loaded (hideAllBlockAreas uses its globals)
+    document.addEventListener('DOMContentLoaded', function openFromUrl () {
+      const shared = parseSongParam(new URLSearchParams(location.search).get('song'));
+      if (shared && BOOKS[shared.book]) {
+        showElement('book-song');
+        document.getElementById('book-song').innerHTML = '<p class="song-missing">載入中…</p>';
+        openSong(shared.book, shared.num);
+      } else {
+        toBookPage();
+      }
+    });
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(function () {});
     }

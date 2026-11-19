@@ -71,6 +71,13 @@ Each songbook is a directory of pre-rendered page images, one directory per book
 
 The `-i` suffix (`-1`, `-2`, ...) marks continuation pages for a song that spans multiple images;
 `index.html`'s `submitInput()` probes sequential suffixes and stops at the first missing file.
+Per-book name/folder/padding live in the `BOOKS` table in `index.html`'s inline script (its `max`
+is only a fallback hint; it's refreshed from `offline-songs.json` when present).
+
+Song links: while a song is on screen the address bar is `index.html?song=D_355` (via
+`history.replaceState`), and the 分享 button shares/copies that URL. On load, `?song=` (also
+accepts `D355`, `B15`, `b_0015`) opens that song directly. Recently opened songs are kept in
+localStorage `poetry:recent-v1` and shown as chips on the book page.
 Song pages are lossless WebP (same pixels as the scanned PNGs, ~30% of the size). Adding a new
 song means adding correctly-named PNGs or WebPs to the matching directory — no code changes
 needed: the deploy workflow runs `tools/songs_to_webp.sh`, which converts any song PNG to

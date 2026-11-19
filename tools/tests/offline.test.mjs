@@ -68,7 +68,7 @@ try {
   const sw = await evaluate(`
     await navigator.serviceWorker.ready;
     for (let i = 0; i < 40 && !navigator.serviceWorker.controller; i++) await new Promise(r => setTimeout(r, 100));
-    const keys = await caches.open('shell-v1').then(c => c.keys());
+    const keys = await caches.open('shell-v2').then(c => c.keys());
     return { controller: !!navigator.serviceWorker.controller, shell: keys.length };`);
   check('worker controls page and shell cached', sw.controller && sw.shell >= 20, sw);
 

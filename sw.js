@@ -4,7 +4,7 @@
 // - Song images and 簡譜 JSON: served from any cache that has them. apps/offline.html
 //   fills one cache per book ("songs-D", ...); songs viewed online can also be kept
 //   in "songs-viewed" (toggle stored in the "offline-settings" cache).
-var SHELL_CACHE = 'shell-v1';
+var SHELL_CACHE = 'shell-v2';
 var VIEWED_CACHE = 'songs-viewed';
 var SETTINGS_CACHE = 'offline-settings';
 var SETTINGS_URL = new URL('./__offline-settings', self.registration.scope).href;
@@ -14,7 +14,7 @@ var SHELL = [
   './',
   './index.html',
   './manifest.json',
-  './style/main.css?v=4',
+  './style/main.css?v=5',
   './style/newTestament.css',
   './script/marked.min.js',
   './script/jianpuPlayer.js',

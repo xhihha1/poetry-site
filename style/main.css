@@ -5,20 +5,74 @@ body {
   }
   #current-book{
     position: fixed;
-    height: 22px;
-    top: 0px;
-    left: 5px;
-    background-color: white;
-    opacity: 0.7;
+    top: 8px;
+    left: 8px;
+    max-width: calc(100% - 120px);
     z-index: 500;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding: 2px 10px;
+    padding: 4px 12px;
     box-sizing: border-box;
-    border: 1px solid #7f5539;
-    /* border-radius: 5px; */
-    font-size: 12px;
+    background-color: rgba(237, 224, 212, 0.92);
+    color: #7f5539;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
     line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+  body[data-page="selectBook"] #current-book,
+  body[data-page="selectPage"] #current-book{
+    display: none;
+  }
+  #share-btn{
+    position: fixed;
+    top: 6px;
+    right: 8px;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 999px;
+    background-color: #7f5539;
+    color: #ede0d4;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  }
+  #share-btn[hidden]{
+    display: none;
+  }
+  #share-btn svg{
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+  #toast{
+    position: fixed;
+    left: 50%;
+    bottom: 76px;
+    z-index: 600;
+    transform: translate(-50%, 12px);
+    padding: 10px 18px;
+    border-radius: 999px;
+    background-color: rgba(60, 40, 28, 0.92);
+    color: #fff;
+    font-size: 15px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  #toast.show{
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
   #body-container{
     position: relative;
@@ -49,97 +103,212 @@ body {
     width: 100%;
     height: 100%;
   }
-  #keyboard-title {
+  .section-title{
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #7f5539;
+  }
+  .chip-row{
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .chip-row::-webkit-scrollbar{
+    display: none;
+  }
+  .chip{
+    flex: 0 0 auto;
+    height: 34px;
+    padding: 0 14px;
+    border: 1.5px solid #b08968;
+    border-radius: 999px;
+    background-color: transparent;
+    color: #7f5539;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .chip.selected{
+    background-color: #7f5539;
+    border-color: #7f5539;
     color: #ede0d4;
-    text-align: center;
   }
-  .inputFieldArea{
-    width: 100%;
-    position: relative;
-    text-align: center;
+  #book-chips .chip{
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 4px;
+    font-size: 14px;
   }
-  #inputField {
-    width: 90%;
-    height: 40px;
-    text-align: center;
-    font-size: 24px;
+  #recent-wrap{
     margin-bottom: 20px;
   }
-
-  .grid-container {
-    display: grid;
-    gap: 10px;
-    background-color: transparent;
-    padding: 10px;
+  #recent-wrap .chip{
+    background-color: #fff8f1;
+    border-color: #e6ccb2;
   }
-
-  .grid-item {
-    background-color: rgba(255, 255, 255, 0.8);
-    text-align: center;
-    padding: 20px;
-    font-size: 30px;
-  }
-
-
-  .itemE {
-    grid-column: 1 / span 3;
-    grid-row: 5;
-  }
-
-  .grid-item button {
-    width: 80px;
-    height: 80px;
-    font-size: 24px;
-    cursor: pointer;
-    background-color: #ddb892;
-    color: #7f5539;
-    border: none;
-    border-radius: 50%;
-  }
-
-  .itemE button {
-    width: 90%;
-    border-radius: 5px;
-  }
-
-  /* .wide {
-    grid-column: span 3;
-  } */
 
   .radio-buttons {
-    margin-bottom: 20px;
-    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px 14px;
     width: 100%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
   }
   .book-item{
     position: relative;
-    width: 300px;
-    max-width: 300px;
-    padding: 5px;
+    min-width: 0;
+  }
+  .book-item label{
+    display: block;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .book-item input[type="radio"]{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
   }
   .book-item img{
+    display: block;
     width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(80, 50, 30, 0.25);
+    outline: 3px solid transparent;
+    outline-offset: 3px;
+    transition: outline-color 0.15s, transform 0.15s;
   }
-  .book-tab-item{
-    flex: 1;
-    color: #ede0d4;
-    font-size: 30px;
+  .book-item label:active img{
+    transform: scale(0.97);
+  }
+  .book-item input:checked ~ img{
+    outline-color: #7f5539;
+  }
+  .book-item input:focus-visible ~ img{
+    outline-color: #b08968;
+  }
+  .book-name{
+    display: block;
+    margin-top: 8px;
+    font-size: 15px;
     font-weight: 700;
-    text-align: center;
+    color: #7f5539;
   }
-  .book-tab-item a{
-    color: #ede0d4;
-    cursor: pointer;
-    text-decoration: none;
-  }
-  .book-tab-item.book-tab-menu{
-    flex: 0 0 56px;
+  .book-item input:checked ~ .book-name::after{
+    content: " ✓";
   }
 
+  .keypad{
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .keypad-display{
+    text-align: center;
+    padding: 18px 0 14px;
+  }
+  #inputField{
+    width: 100%;
+    height: 64px;
+    border: none;
+    background: transparent;
+    color: #7f5539;
+    text-align: center;
+    font-size: 56px;
+    font-weight: 700;
+    caret-color: transparent;
+    outline: none;
+  }
+  #inputField::placeholder{
+    color: #c9a98a;
+    font-size: 36px;
+  }
+  #keyboard-title{
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: #9c6644;
+  }
+  .grid-container{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .key{
+    height: 58px;
+    border: none;
+    border-radius: 14px;
+    background-color: #fff8f1;
+    color: #7f5539;
+    font-size: 26px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(80, 50, 30, 0.15);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .key:active{
+    background-color: #e6ccb2;
+  }
+  .key-text{
+    font-size: 16px;
+    color: #9c6644;
+  }
+  .key svg{
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    vertical-align: middle;
+  }
+  .open-btn{
+    width: 100%;
+    height: 56px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 14px;
+    background-color: #c9a98a;
+    color: #fff8f1;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .open-btn.ready{
+    background-color: #7f5539;
+  }
+
+  .book-tab-item{
+    flex: 1;
+  }
+  .book-tab-item a{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: 100%;
+    color: #ddb892;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .book-tab-item svg{
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .book-tab-item.active a{
+    color: #fff8f1;
+  }
   #song-player{
     position: fixed;
     right: 10px;
@@ -201,13 +370,23 @@ body {
     background-color: #ddb892;
   }
 
-  #book-page{
-    display: none;
-    background-color: #ddb892;
-    color: #7f5539;
-  }
+  #book-page,
   #book-keyboard{
     display: none;
+    height: auto;
+    min-height: 100%;
+    box-sizing: border-box;
+    padding: 20px 16px 24px;
+    background-color: #ede0d4;
+    color: #7f5539;
+  }
+  #book-song:empty::before{
+    content: "還沒選歌，到「歌號」輸入號碼";
+    display: block;
+    margin: 40px 16px;
+    color: #ede0d4;
+    font-size: 18px;
+    font-weight: 700;
   }
   #book-song{
     display: none;
