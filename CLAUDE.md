@@ -125,6 +125,8 @@ and in `script/newTestament.js`/`bible.html` — keep them in sync if books are 
   transaction on the whole room) when `apps/tiles/firebase-config.js` has a config, otherwise a
   localStorage fallback where tabs on one device act as separate players (player id is per tab
   in that mode). A turn is edited locally and only written on 完成/抽牌.
+  `rules.suggest(board, hand, melded)` (also pure) powers the 💡提示 / 🤖自動出牌 buttons;
+  自動出牌 fills the local turn with it and goes through the same 完成 path.
 - `backup.html` — appears to be a leftover "add to home screen" demo/reference page, not linked
   from `index.html`.
 

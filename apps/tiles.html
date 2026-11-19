@@ -246,6 +246,12 @@
     }
 
     .actions .btn { flex: 1; height: 42px; padding: 0 6px; font-size: 15px; }
+    .actions.assist { padding-bottom: 0; }
+    .actions.assist .btn { height: 38px; background: var(--soft); }
+
+    .tile.hint { outline: 3px solid #7ed957; outline-offset: 1px; box-shadow: 0 2px 0 #b9a68c, 0 0 10px 2px #7ed957; }
+    .set.hint { border-color: #7ed957; }
+    .btn.hint { box-shadow: 0 0 0 3px #7ed957; }
 
     .overlay {
       position: fixed;
@@ -319,6 +325,10 @@
     <div class="board" id="board"></div>
     <div class="hand-area">
       <div class="hand" id="hand"></div>
+      <div class="actions assist">
+        <button class="btn" id="hintBtn">💡 提示</button>
+        <button class="btn" id="autoBtn">🤖 自動出牌</button>
+      </div>
       <div class="actions">
         <button class="btn" id="sortBtn">依顏色</button>
         <button class="btn" id="undoBtn">復原</button>
@@ -349,6 +359,7 @@
         <li>不能出牌（或不想出）就按「抽牌」，換下一個人。</li>
         <li>先把手牌出完的人贏。</li>
         <li>操作：點牌選取（可以選多張），再點組後面的「＋」或「新的一組」放上去。弄亂了就按「復原」。</li>
+        <li>不知道怎麼出？按「💡 提示」會標出建議出的牌；「🤖 自動出牌」直接照建議出完（沒牌可出就抽牌）。</li>
       </ul>
       <button class="btn primary block" id="helpClose">知道了</button>
     </div>
@@ -382,6 +393,7 @@
     var messageBad = false;
     var sortMode = storeGet(localStorage, 'tiles:sort') || 'color';
     var lastTurnWasMine = false;
+    var hint = null;        // {key, result} from R.suggest for this turn (result null = draw)
 
     var $ = function (id) { return document.getElementById(id); };
 
@@ -513,6 +525,7 @@
     }
 
     function drawTile() {
+      message = '';
       act(function (cur) {
         var r = R.draw(cur, me);
         if (r.error) return r;
@@ -534,6 +547,7 @@
       var board = work.board.map(function (s) { return s.slice(); });
       var hand = work.hand.slice();
       var count = work.startHand.length - hand.length;
+      message = '';
       act(function (cur) {
         var r = R.commit(cur, me, board, hand);
         if (r.error) return r;
@@ -613,6 +627,50 @@
       workKey = null;
       syncWork();
       render();
+    }
+
+    // ---------- 提示 / 自動出牌 ----------
+
+    var COLOR_NAMES = ['紅', '藍', '綠', '橘'];
+    function tileName(id) { return R.isWild(id) ? '轉' : COLOR_NAMES[R.color(id)] + R.num(id); }
+
+    // Suggestion for the start of this turn (cached per turn).
+    function currentHint() {
+      if (!work) return null;
+      if (!hint || hint.key !== workKey) {
+        hint = { key: workKey, result: R.suggest(room.board, work.startHand, !!room.melded[me]) };
+      }
+      return hint;
+    }
+
+    function describe(result) {
+      return '建議：' + result.moves.map(function (m) {
+        var names = m.tiles.map(tileName).join(' ');
+        if (m.type === 'new') return '新的一組 ' + names;
+        if (m.type === 'split') return '把第 ' + (m.set + 1) + ' 組拆開，放進 ' + names;
+        return '接到第 ' + (m.set + 1) + ' 組 ' + names;
+      }).join('；');
+    }
+
+    function showHint() {
+      var h = currentHint();
+      if (!h) return;
+      messageBad = false;
+      message = h.result ? describe(h.result) : '沒有可以出的牌，建議' + (room.pool.length ? '抽牌' : '跳過');
+      render();
+    }
+
+    function autoPlay() {
+      var h = currentHint();
+      if (!h) return;
+      if (!h.result) return drawTile();
+      // same path as a manual turn: edit the local turn, then 完成
+      work.board = h.result.board.map(function (s) { return s.slice(); });
+      work.hand = h.result.hand.slice();
+      selected = [];
+      message = '';
+      render();
+      finishTurn();
     }
 
     // ---------- rendering ----------
@@ -740,10 +798,14 @@
       boardEl.innerHTML = '';
       var board = mine ? work.board : room.board;
       var played = mine ? work.startHand : [];
+      var shown = mine && hint && hint.key === workKey ? hint.result : null;
+      var hintTiles = shown ? shown.played : [];
+      var hintSets = shown ? shown.moves.map(function (m) { return m.set; }) : [];
+      var untouched = mine && work.hand.length === work.startHand.length && board.length === room.board.length;
       board.forEach(function (set, i) {
         var info = R.analyzeSet(set);
         var setEl = document.createElement('div');
-        setEl.className = 'set' + (mine && !info ? ' invalid' : '');
+        setEl.className = 'set' + (mine && !info ? ' invalid' : '') + (untouched && hintSets.indexOf(i) >= 0 ? ' hint' : '');
         (info ? info.ordered : set).forEach(function (id) {
           var t = tileEl(id);
           if (played.indexOf(id) >= 0) t.classList.add('played');
@@ -776,7 +838,11 @@
       var handEl = $('hand');
       handEl.innerHTML = '';
       var hand = (mine ? work.hand : room.hands[me]).slice().sort(sortMode === 'color' ? R.byColor : R.byNumber);
-      hand.forEach(function (id) { handEl.appendChild(tileEl(id)); });
+      hand.forEach(function (id) {
+        var t = tileEl(id);
+        if (hintTiles.indexOf(id) >= 0) t.classList.add('hint');
+        handEl.appendChild(t);
+      });
       if (mine && selected.some(function (t) { return work.startHand.indexOf(t) >= 0 && work.hand.indexOf(t) < 0; })) {
         var back = document.createElement('button');
         back.className = 'slot';
@@ -789,6 +855,9 @@
       $('sortBtn').textContent = sortMode === 'color' ? '依顏色' : '依號碼';
       $('undoBtn').disabled = !mine;
       $('drawBtn').disabled = !mine;
+      $('drawBtn').classList.toggle('hint', !!(mine && hint && hint.key === workKey && !hint.result));
+      $('hintBtn').disabled = !mine;
+      $('autoBtn').disabled = !mine;
       $('drawBtn').textContent = room.pool.length ? '抽牌' : '跳過';
       $('doneBtn').disabled = !mine || work.hand.length === work.startHand.length;
 
@@ -841,6 +910,8 @@
     $('undoBtn').addEventListener('click', undo);
     $('drawBtn').addEventListener('click', drawTile);
     $('doneBtn').addEventListener('click', finishTurn);
+    $('hintBtn').addEventListener('click', showHint);
+    $('autoBtn').addEventListener('click', autoPlay);
     $('hand').addEventListener('click', function () { if (work && selected.length) returnToHand(); });
     $('helpBtn').addEventListener('click', function () { $('helpOverlay').hidden = false; });
     $('helpClose').addEventListener('click', function () { $('helpOverlay').hidden = true; });

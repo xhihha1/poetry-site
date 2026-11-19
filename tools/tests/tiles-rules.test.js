@@ -56,4 +56,53 @@ let w = { status:'playing', order:['a','b'], turn:0, board:[], pool:[1], passes:
 r = R.commit(w, 'a', [[t(0,3),t(0,1),t(0,2)]], []);
 assert.strictEqual(r.state.status, 'ended'); assert.strictEqual(r.state.winner, 'a');
 assert.deepStrictEqual(r.state.board[0], [t(0,1),t(0,2),t(0,3)]);
+// ---------- suggest ----------
+const legal = (board, hand, melded, sg) =>
+  R.checkTurn({ board, hand }, { board: sg.board, hand: sg.hand }, melded);
+// first meld: a 30-point group is found, the low tile stays in hand
+let sg = R.suggest([], b0.hand, false);
+assert(sg); assert.strictEqual(legal([], b0.hand, false, sg), null);
+assert.deepStrictEqual(sg.hand, [t(0,1)]);
+assert.deepStrictEqual(sg.moves.map(m => m.type), ['new']);
+// first meld under 30 points => draw
+assert.strictEqual(R.suggest([], [t(0,1),t(0,2),t(0,3),t(3,9)], false), null);
+// first meld never touches the board, even when a tile could extend it
+sg = R.suggest(sb.board, sb.hand, false);
+assert.strictEqual(legal(sb.board, sb.hand, false, sg), null);
+assert.deepStrictEqual(sg.hand, [t(1,7)]);
+// after melding: play everything (new group + extend the run)
+sg = R.suggest(sb.board, sb.hand, true);
+assert.strictEqual(legal(sb.board, sb.hand, true, sg), null);
+assert.deepStrictEqual(sg.hand, []);
+assert(sg.moves.some(m => m.type === 'extend' && m.set === 0 && m.tiles[0] === t(1,7)));
+// split a long run around a duplicate: 紅3-7 + 紅5 => 3,4,5 + 5,6,7
+const long = [[t(0,3),t(0,4),t(0,5),t(0,6),t(0,7)]];
+sg = R.suggest(long, [t(0,5,1), t(3,13)], true);
+assert.strictEqual(legal(long, [t(0,5,1), t(3,13)], true, sg), null);
+assert.deepStrictEqual(sg.hand, [t(3,13)]);
+assert.strictEqual(sg.board.length, 2); assert.strictEqual(sg.moves[0].type, 'split');
+// nothing fits => null (draw)
+assert.strictEqual(R.suggest(long, [t(1,1), t(2,9), t(3,13)], true), null);
+// wild is kept unless it empties the hand
+const run3 = [[t(2,4),t(2,5),t(2,6)]];
+assert.strictEqual(R.suggest(run3, [W1, t(1,1)], true), null);
+sg = R.suggest(run3, [W1], true);
+assert.strictEqual(legal(run3, [W1], true, sg), null); assert.deepStrictEqual(sg.hand, []);
+// fuzz: random games, every suggestion passes checkTurn and commit
+let seed = 7;
+const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+let plays = 0, draws = 0;
+for (let g = 0; g < 40; g++) {
+  let st = R.deal({ order: ['a','b','c'] }, rand);
+  for (let step = 0; step < 300 && st.status === 'playing'; step++) {
+    const pid = st.order[st.turn];
+    const s2 = R.suggest(st.board, st.hands[pid], st.melded[pid]);
+    if (s2) {
+      assert.strictEqual(legal(st.board, st.hands[pid], st.melded[pid], s2), null);
+      const res = R.commit(st, pid, s2.board, s2.hand);
+      assert(!res.error, res.error); st = res.state; plays++;
+    } else { st = R.draw(st, pid).state; draws++; }
+  }
+}
+assert(plays > 100 && draws > 0);
 console.log('all rules tests passed');
